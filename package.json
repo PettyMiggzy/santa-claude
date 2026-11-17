@@ -1,0 +1,32 @@
+{
+  "name": "santa-claude-ai",
+  "version": "0.1.0",
+  "description": "Santa Claude AI: the AI Santa on Solana. Landing page, 3D Santa and Santa chat.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "node server.mjs",
+    "make-santa": "node scripts/make-santa-3d.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PettyMiggzy/santa-claude.git"
+  },
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/PettyMiggzy/santa-claude/issues"
+  },
+  "homepage": "https://github.com/PettyMiggzy/santa-claude#readme",
+  "dependencies": {
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.7"
+  },
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  }
+}

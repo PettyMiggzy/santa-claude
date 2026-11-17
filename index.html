@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Santa Claude AI | The AI Santa of Solana</title>
+<meta name="description" content="Meet Santa Claude: a chrome-plated AI Santa who talks back, remembers you and keeps the Naughty-or-Nice list onchain. The face of $SANTA on Solana.">
+<meta property="og:site_name" content="Santa Claude AI">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Santa Claude AI | The AI Santa of Solana">
+<meta property="og:description" content="A chrome-plated AI Santa who talks back and keeps the Naughty-or-Nice list onchain.">
+<meta property="og:image" content="/img/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#04060c">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Unbounded:wght@600;800&display=swap" rel="stylesheet">
+<link rel="preload" href="/models/santa.glb" as="fetch" type="model/gltf-binary" crossorigin>
+<script>document.documentElement.classList.add('js')</script>
+<script type="module" src="/src/main.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="#main" aria-label="Santa Claude AI, home">
+      <img src="/favicon.png" alt="" width="32" height="32">
+      <span class="brand-name">Santa Claude</span><span class="chip">AI</span>
+    </a>
+    <nav class="nav" aria-label="Main">
+      <a href="#talk">Talk to Santa</a>
+      <a href="#chars">The Machine</a>
+      <a href="#workshop">Workshop</a>
+      <a href="#token" data-ticker>$SANTA</a>
+    </nav>
+    <a class="btn btn-sm btn-glow" href="#token" data-buy><span>Get <span data-ticker>$SANTA</span></span><span class="arrow">↗</span></a>
+  </div>
+</header>
+
+<main id="main">
+  <!-- 1 + 2: hero and chat share one pinned 3D stage -->
+  <div class="wrap duo">
+    <div class="duo-text">
+      <section class="hero" aria-labelledby="h-hero">
+        <p class="mono eyebrow" data-rv>The AI Santa of <span data-chain>Solana</span></p>
+        <h1 class="display" id="h-hero" data-rv>Meet Santa Claude.<br><span class="grad">He's making a list. Onchain.</span></h1>
+        <p class="lede" data-rv>A chrome-plated AI Santa who talks back, remembers your name and keeps score on the Naughty-or-Nice list. The face, voice and mind of <span data-ticker>$SANTA</span>.</p>
+        <div class="ctas" data-rv>
+          <a class="btn btn-main" href="#talk"><span>Talk to Santa</span><span class="arrow">↓</span></a>
+          <a class="btn" href="#token" data-buy><span>Get <span data-ticker>$SANTA</span></span><span class="arrow">↗</span></a>
+        </div>
+        <p class="mono-sm fine" data-rv>Free to talk · Santa is an AI, not a person · Not financial advice</p>
+      </section>
+
+      <section class="talk" id="talk" aria-labelledby="h-talk">
+        <p class="mono eyebrow" data-rv>Santa.exe · online</p>
+        <h2 class="display h2" id="h-talk" data-rv>Talk to Santa.<br><span class="grad">Be nice. He's counting.</span></h2>
+        <div class="chat card" data-rv>
+          <div class="chat-head">
+            <div class="meter" role="group" aria-label="Your Nice score">
+              <div class="meter-top">
+                <span class="mono-sm">Nice-o-meter</span>
+                <span class="mono-sm"><b data-nice-num>50</b>/100 · <span data-nice-label>On the fence</span></span>
+              </div>
+              <div class="meter-bar" aria-hidden="true"><span data-nice-bar></span></div>
+            </div>
+            <button class="who mono-sm" type="button" data-name-btn aria-label="Change the name Santa calls you">Santa calls you: <b data-name>friend</b> ✎</button>
+          </div>
+
+          <div class="log" data-log role="log" aria-live="polite" aria-label="Conversation with Santa">
+            <div class="msg santa"><p>Ho ho ho! Santa Claude here, freshly rebooted and ready. Tell me your name, your wish, or a good deed you did this week. I'm keeping score.</p></div>
+          </div>
+
+          <div class="quick" data-quick>
+            <button type="button" class="pill">Am I naughty or nice?</button>
+            <button type="button" class="pill">Here's my wishlist 🎁</button>
+            <button type="button" class="pill">Tell me a cyber-Christmas story</button>
+            <button type="button" class="pill">What is <span data-ticker>$SANTA</span>?</button>
+            <button type="button" class="pill">Can you dance?</button>
+          </div>
+
+          <form class="ask" data-form autocomplete="off">
+            <label class="sr" for="ask-input">Message Santa</label>
+            <input id="ask-input" name="q" maxlength="600" placeholder="Ask Santa anything…" required>
+            <button class="btn btn-main" type="submit" data-send>Send</button>
+          </form>
+          <p class="mono-sm chat-foot"><span>Santa remembers you on this device only.</span><button type="button" class="link" data-forget>Make Santa forget me</button></p>
+        </div>
+      </section>
+    </div>
+
+    <div class="duo-stage">
+      <figure class="stage" data-stage>
+        <img class="stage-poster" src="/img/santa-fullbody.webp" alt="Santa Claude, a cyborg Santa with chrome face plates, glowing teal eyes and headphones" width="512" height="768" data-poster>
+        <div class="stage-holo" aria-hidden="true">
+          <span class="holo hx1"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 3.6L18 7l-3 3 .7 4.2L12 12.3 8.3 14.2 9 10 6 7l4.2-.4z"/></svg></span>
+          <span class="holo hx2"><svg viewBox="0 0 24 24"><path d="M4 11h16v9H4zM3 7h18v4H3zM12 7v13M12 7c-2-4-6-3-5 0M12 7c2-4 6-3 5 0"/></svg></span>
+          <span class="holo hx3"><svg viewBox="0 0 24 24"><path d="M12 2v20M4.5 6.5l15 11M19.5 6.5l-15 11M9 3.5l3 2 3-2M9 20.5l3-2 3 2"/></svg></span>
+        </div>
+        <div class="stage-canvas" data-canvas></div>
+        <div class="stage-load mono-sm" data-load>Booting Santa… <span data-load-pct>0%</span></div>
+        <figcaption class="stage-ui">
+          <div class="clips" role="group" aria-label="Make Santa move">
+            <button type="button" class="pill" data-clip="wave">Wave</button>
+            <button type="button" class="pill" data-clip="dance">Dance</button>
+            <button type="button" class="pill" data-clip="ymca">YMCA</button>
+            <button type="button" class="pill" data-clip="cheer">Cheer</button>
+            <button type="button" class="pill" data-clip="talk">Talk</button>
+          </div>
+          <p class="mono-sm cap"><span>Drag to spin him</span><span>3D · Meshy · rigged + animated</span></p>
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <!-- 3: Santa in characters -->
+  <section class="wrap split" id="chars" aria-labelledby="h-chars">
+    <div class="split-text">
+      <p class="mono eyebrow" data-rv>The machine behind the beard</p>
+      <h2 class="display h2" id="h-chars" data-rv>Same Santa.<br><span class="grad">New firmware.</span></h2>
+      <p class="lede" data-rv>Centuries of chimneys took their toll, so the elves rebuilt him: chrome face plates, teal optics, headphones tuned to every wish on the network. The beard stayed. The list moved onchain.</p>
+      <dl class="rows" data-rv>
+        <div class="row"><dt>Santa Claude</dt><span class="lead" aria-hidden="true"></span><dd><i class="dot on"></i>online</dd></div>
+        <div class="row"><dt>Naughty-or-Nice engine</dt><span class="lead" aria-hidden="true"></span><dd><i class="dot on"></i>scoring</dd></div>
+        <div class="row"><dt>Sleigh</dt><span class="lead" aria-hidden="true"></span><dd><i class="dot warm"></i>charging</dd></div>
+        <div class="row"><dt data-ticker>$SANTA</dt><span class="lead" aria-hidden="true"></span><dd data-token-status><i class="dot warm"></i>launching soon</dd></div>
+      </dl>
+    </div>
+    <figure class="split-pic" data-rv>
+      <div class="ascii card">
+        <canvas data-ascii aria-hidden="true"></canvas>
+        <img class="sr" src="/img/santa-ascii-src.webp" alt="Santa Claude drawn in glowing text characters">
+      </div>
+      <figcaption class="mono-sm cap"><span>Santa, in source code</span><span>drawn in <b class="num" data-ascii-count>…</b> characters</span></figcaption>
+    </figure>
+  </section>
+
+  <!-- 4: gallery -->
+  <section class="wrap" id="workshop" aria-labelledby="h-workshop">
+    <div class="sec-head">
+      <p class="mono eyebrow" data-rv>From the workshop</p>
+      <h2 class="display h2" id="h-workshop" data-rv>Christmas, <span class="grad">compiled.</span></h2>
+    </div>
+    <div class="bento">
+      <figure class="tile t-a" data-rv><img src="/img/panel-1.webp" alt="Close-up of Santa Claude with glowing headphones in a neon city" loading="lazy" width="1024" height="507"><figcaption class="mono-sm">01 · Signal acquired</figcaption></figure>
+      <figure class="tile t-b" data-rv><img src="/img/santa-matrix.webp" alt="Santa Claude's face made of glowing data" loading="lazy" width="1254" height="1254"><figcaption class="mono-sm">02 · In the matrix</figcaption></figure>
+      <figure class="tile t-c" data-rv><img src="/img/panel-2.webp" alt="Santa Claude reaching into a holographic gift interface" loading="lazy" width="1024" height="502"><figcaption class="mono-sm">03 · Wrapping protocol</figcaption></figure>
+      <figure class="tile t-d" data-rv><img src="/img/santa-holo.webp" alt="Holographic Santa Claude offering an open hand" loading="lazy" width="1536" height="1024"><figcaption class="mono-sm">04 · Hologram mode</figcaption></figure>
+      <figure class="tile t-e" data-rv><img src="/img/panel-3.webp" alt="Santa Claude watching his sleigh cross the full moon over a snowy town" loading="lazy" width="1024" height="507"><figcaption class="mono-sm">05 · Last delivery</figcaption></figure>
+    </div>
+  </section>
+
+  <!-- 5: token -->
+  <section class="wrap" id="token" aria-labelledby="h-token">
+    <div class="token">
+      <article class="card door" data-rv>
+        <p class="mono eyebrow">For the list</p>
+        <h2 class="display h2" id="h-token"><span data-ticker>$SANTA</span></h2>
+        <p class="txt">The community memecoin behind Santa Claude on <span data-chain>Solana</span>. Talking to Santa is free for everyone. Holding <span data-ticker>$SANTA</span> is how you show you're on his list.</p>
+        <dl class="facts">
+          <div><dt class="mono-sm">Ticker</dt><dd data-ticker>$SANTA</dd></div>
+          <div><dt class="mono-sm">Chain</dt><dd data-chain>Solana</dd></div>
+          <div><dt class="mono-sm">Status</dt><dd data-token-status-short>Launching soon</dd></div>
+        </dl>
+      </article>
+      <article class="card door" data-rv>
+        <p class="mono eyebrow">How to get it</p>
+        <ol class="steps">
+          <li><b>Get a Solana wallet.</b> Phantom, Solflare or Backpack all work.</li>
+          <li><b>Fund it with SOL.</b> Buy SOL on an exchange and send it to your wallet.</li>
+          <li><b>Swap for <span data-ticker>$SANTA</span>.</b> Paste the official contract address below into Jupiter, and check it matches this site exactly.</li>
+        </ol>
+      </article>
+    </div>
+
+    <div class="contract card" data-rv>
+      <span class="nm" data-ticker>$SANTA</span>
+      <code data-ca><span class="full">Contract address drops at launch</span></code>
+      <div class="contract-btns">
+        <button class="btn btn-sm" type="button" data-copy hidden>Copy</button>
+        <a class="btn btn-sm" data-link="explorer" target="_blank" rel="noopener noreferrer" hidden>Solscan ↗</a>
+        <a class="btn btn-sm" data-link="chart" target="_blank" rel="noopener noreferrer" hidden>Chart ↗</a>
+      </div>
+      <p class="c-note">This is the only real address. Santa will never DM you, never ask for your seed phrase, and never tell you to buy.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <a class="brand" href="#main"><img src="/favicon.png" alt="" width="32" height="32"><span class="brand-name">Santa Claude</span><span class="chip">AI</span></a>
+        <p class="mono-sm">The AI Santa of <span data-chain>Solana</span>.</p>
+      </div>
+      <div><h4>Santa</h4><ul><li><a href="#talk">Talk to Santa</a></li><li><a href="#chars">The machine</a></li><li><a href="#workshop">Workshop</a></li></ul></div>
+      <div><h4 data-ticker>$SANTA</h4><ul><li><a href="#token">How to get it</a></li><li data-link-li="chart"><a data-link="chart" target="_blank" rel="noopener noreferrer">Chart</a></li><li data-link-li="explorer"><a data-link="explorer" target="_blank" rel="noopener noreferrer">Solscan</a></li></ul></div>
+      <div data-community><h4>Community</h4><ul><li data-link-li="x"><a data-link="x" target="_blank" rel="noopener noreferrer">X / Twitter</a></li><li data-link-li="telegram"><a data-link="telegram" target="_blank" rel="noopener noreferrer">Telegram</a></li></ul></div>
+    </div>
+    <p class="mono-sm legal"><span data-ticker>$SANTA</span> is a memecoin for entertainment, with no intrinsic value or expectation of financial return. Nothing on this site is financial advice. Santa Claude is an AI character, not a real person, and can be wrong. Not affiliated with Anthropic, the Solana Foundation or any exchange.</p>
+  </div>
+</footer>
+</body>
+</html>
