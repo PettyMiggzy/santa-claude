@@ -1,13 +1,10 @@
 // Vercel serverless function: POST /api/chat
+// Web-signature handler (Request -> Response), as in Vercel's Node.js runtime docs.
+// handleChat answers non-POST requests with 405 itself.
 import { handleChat } from '../server/santa.js';
 
-export async function POST(request) {
-  return handleChat(request, process.env);
-}
-
-export async function GET() {
-  return new Response(JSON.stringify({ error: 'POST only' }), {
-    status: 405,
-    headers: { 'content-type': 'application/json', allow: 'POST' },
-  });
-}
+export default {
+  fetch(request) {
+    return handleChat(request, process.env);
+  },
+};
