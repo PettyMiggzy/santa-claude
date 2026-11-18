@@ -233,10 +233,15 @@ export function initChat(root) {
       renderMeter();
       setBusy(false);
 
-      if (wantsDance) act(Math.random() < 0.5 ? 'dance' : 'ymca');
+      const naughty = delta <= -2;
+      if (naughty) act('naughty'); // out comes the Naughty List blaster
+      else if (wantsDance) act(Math.random() < 0.5 ? 'dance' : 'ymca');
       else if (delta >= 2) act('cheer');
 
-      if (getPrefs().voice && sm) {
+      if (naughty) {
+        talk(false);
+        await speak({ line: 'naughty' });
+      } else if (getPrefs().voice && sm) {
         await speak({ text: signed, sig: sm[1] }); // keeps Santa talking until he's done
       } else {
         talk(false);

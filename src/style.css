@@ -240,6 +240,10 @@ button { font: inherit; color: inherit; }
 .hx2 svg { stroke: #c9a2ff; filter: drop-shadow(0 0 6px var(--purple)); }
 .hx3 { top: 46%; left: 5%; animation-delay: -4.6s; width: 58px; height: 48px; }
 @keyframes float { 50% { transform: translateY(-10px); } }
+.stage.shake { animation: shake 0.28s ease-out; }
+@keyframes shake { 20% { transform: translate(-6px, 3px); } 40% { transform: translate(5px, -4px); } 60% { transform: translate(-3px, 2px); } 80% { transform: translate(2px, -1px); } }
+.reduced .stage.shake { animation: none; }
+.pill-naughty:hover { border-color: var(--red); color: var(--red); }
 
 .talk { padding: 24px 0 96px; }
 .chat { margin-top: 28px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }

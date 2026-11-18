@@ -328,6 +328,29 @@ export function sfx(kind) {
     o.connect(lp).connect(g).connect(sfxBus);
     o.start(t);
     o.stop(t + 0.4);
+  } else if (kind === 'blast') {
+    // punchy coal-blaster shot: thump + crack + a tiny jingle
+    const o = ctx.createOscillator();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(160, t);
+    o.frequency.exponentialRampToValueAtTime(38, t + 0.22);
+    const g = ctx.createGain();
+    env(g, t, 0.55, 0.28);
+    o.connect(g).connect(sfxBus);
+    o.start(t);
+    o.stop(t + 0.3);
+    const n = ctx.createBufferSource();
+    n.buffer = noiseBuf;
+    const bp = ctx.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.value = 1800;
+    bp.Q.value = 0.7;
+    const ng = ctx.createGain();
+    env(ng, t, 0.4, 0.16);
+    n.connect(bp).connect(ng).connect(sfxBus);
+    n.start(t, Math.random() * 0.5);
+    n.stop(t + 0.2);
+    sleighBells(t + 0.05, 0.25, sfxBus, 3);
   } else if (kind === 'whoosh') {
     const n = ctx.createBufferSource();
     n.buffer = noiseBuf;
@@ -372,7 +395,8 @@ function plainText(text) {
 }
 
 // Pre-recorded lines in Santa's real voice (public/audio/*.mp3): instant, no API needed.
-const LINES = new Set(['welcome', 'hohoho']);
+const LINES = new Set(['welcome', 'hohoho', 'naughty']);
+window.addEventListener('santa:fire', () => sfx('blast'));
 const lineCache = new Map();
 
 /**

@@ -17,6 +17,7 @@ const CLIPS = {
   cheer: 'happy_jump_m',
   talk: 'Talk_with_Hands_Open',
   bow: 'Gentlemans_Bow',
+  naughty: 'Draw_and_Shoot_from_Back',
 };
 const HEIGHT = 1.8; // world units the model is scaled to
 
@@ -159,9 +160,182 @@ export function initStage(root, { reduced = false, onProgress, onReady, onError 
     fadeTo(talking ? 'talk' : 'idle');
   }
 
+  // ── props: gift sack by his feet, Naughty List blaster slung on his back ──
+  let bones = {};
+  let gun = null;
+  let muzzle = null;
+  let gunInHand = false;
+  let shots = [];
+  const V = () => new THREE.Vector3();
+  const tA = V();
+  const tB = V();
+  const tC = V();
+  const mBasis = new THREE.Matrix4();
+
+  function normalized(obj, axis, size, { base = false } = {}) {
+    const wrap = new THREE.Group();
+    obj.traverse((o) => {
+      if (o.isMesh) {
+        o.frustumCulled = false;
+        if (o.material) o.material.envMapIntensity = 0.8;
+      }
+    });
+    wrap.add(obj);
+    const box = new THREE.Box3().setFromObject(obj);
+    const sz = box.getSize(V());
+    obj.scale.multiplyScalar(size / (sz[axis] || 1));
+    box.setFromObject(obj);
+    const c = box.getCenter(V());
+    obj.position.sub(base ? new THREE.Vector3(c.x, box.min.y, c.z) : c);
+    return { wrap, box: box.getSize(V()) };
+  }
+
+  function loadProps() {
+    loader.load('/models/sack.glb', (g) => {
+      const { wrap } = normalized(g.scene, 'y', 0.78, { base: true });
+      wrap.position.set(-0.72, 0, -0.18);
+      wrap.rotation.y = 0.7;
+      holder.add(wrap);
+    });
+    loader.load('/models/blaster.glb', (g) => {
+      const { wrap, box } = normalized(g.scene, 'x', 0.95);
+      // move the origin to the grip so the hand holds it there (muzzle points along -X)
+      const inner = wrap.children[0];
+      inner.position.x -= 0.13 * box.x;
+      inner.position.y += 0.2 * box.y;
+      muzzle = new THREE.Object3D();
+      muzzle.position.set(-0.5 * box.x - 0.13 * box.x, 0.08 * box.y, 0);
+      wrap.add(muzzle);
+      gun = wrap;
+      scene.add(gun);
+      holster();
+    });
+  }
+
+  function aimBasis(dir) {
+    const x = tC.copy(dir).negate();
+    const z = V().crossVectors(x, new THREE.Vector3(0, 1, 0)).normalize();
+    const y = V().crossVectors(z, x).normalize();
+    mBasis.makeBasis(x, y, z);
+    return mBasis;
+  }
+
+  function holster() {
+    if (!gun || !bones.spine) return;
+    gunInHand = false;
+    scene.attach(gun);
+    holder.updateMatrixWorld(true);
+    bones.spine.getWorldPosition(tA);
+    // diagonally across his back, barrel up over the right shoulder
+    const back = V().set(0, 0, -1).applyQuaternion(holder.quaternion);
+    gun.position.copy(tA).addScaledVector(back, 0.24).add(V().set(0, -0.05, 0));
+    const dir = V().set(0.55, 0.83, 0).applyQuaternion(holder.quaternion).normalize();
+    const x = dir.clone().negate();
+    const z = back.clone();
+    const y = V().crossVectors(z, x).normalize();
+    z.crossVectors(x, y).normalize();
+    gun.quaternion.setFromRotationMatrix(mBasis.makeBasis(x, y, z));
+    gun.position.addScaledVector(dir, -0.12);
+    bones.spine.attach(gun);
+  }
+
+  function gunToHand() {
+    gunInHand = true;
+    scene.attach(gun);
+  }
+
+  let aimYaw = 0; // extra turn so Santa aims at the viewer
+  function followHand() {
+    bones.hand.getWorldPosition(tA);
+    bones.fore.getWorldPosition(tB);
+    const dir = tB.subVectors(tA, tB).normalize();
+    const a = actions.naughty;
+    if (a && current === a) {
+      const f = a.time / a.getClip().duration;
+      if (f > 0.4 && f < 0.85) {
+        aimYaw -= Math.atan2(dir.x, dir.z) * 0.12; // swing the barrel toward the camera
+        dir.y *= 0.2; // and level it out
+        dir.normalize();
+      }
+    }
+    gun.quaternion.setFromRotationMatrix(aimBasis(dir));
+    gun.position.copy(tA).addScaledVector(dir, 0.04);
+  }
+
+  // coal + muzzle flash
+  const coalGeo = new THREE.DodecahedronGeometry(0.035, 0);
+  const coalMat = new THREE.MeshStandardMaterial({ color: 0x1b1b1f, roughness: 0.9, metalness: 0.1, emissive: 0x220800 });
+  const flashMat = new THREE.SpriteMaterial({ map: radialTexture('rgba(255,236,170,1)', 'rgba(255,120,40,0)'), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
+  const flash = new THREE.Sprite(flashMat);
+  flash.visible = false;
+  scene.add(flash);
+  const flashLight = new THREE.PointLight(0xffa860, 0, 4, 2);
+  scene.add(flashLight);
+  const coals = [];
+
+  function fire() {
+    if (!muzzle) return;
+    muzzle.getWorldPosition(tA);
+    flash.position.copy(tA);
+    flash.scale.setScalar(0.45 + Math.random() * 0.2);
+    flash.visible = true;
+    flashLight.position.copy(tA);
+    flashLight.intensity = 14;
+    setTimeout(() => {
+      flash.visible = false;
+      flashLight.intensity = 0;
+    }, 70);
+    const toCam = V().subVectors(camera.position, tA).normalize();
+    for (let i = 0; i < 7; i++) {
+      const m = new THREE.Mesh(coalGeo, coalMat);
+      m.position.copy(tA);
+      const v = toCam.clone().multiplyScalar(5 + Math.random() * 3);
+      v.x += (Math.random() - 0.5) * 2.2;
+      v.y += (Math.random() - 0.2) * 1.6;
+      scene.add(m);
+      coals.push({ m, v, life: 0, spin: V().set(Math.random(), Math.random(), Math.random()).multiplyScalar(12) });
+    }
+    root.classList.remove('shake');
+    void root.offsetWidth;
+    root.classList.add('shake');
+    window.dispatchEvent(new CustomEvent('santa:fire'));
+  }
+
+  function updateProps(dt) {
+    const a = actions.naughty;
+    if (gun && a && current === a && a.isRunning()) {
+      const f = a.time / a.getClip().duration;
+      if (!gunInHand && f > 0.2) gunToHand();
+      for (let i = 0; i < shots.length; i++) {
+        if (!shots[i].done && f >= shots[i].at) {
+          shots[i].done = true;
+          fire();
+        }
+      }
+    }
+    if (gun && gunInHand) followHand();
+    for (let i = coals.length - 1; i >= 0; i--) {
+      const c = coals[i];
+      c.life += dt;
+      c.v.y -= 6 * dt;
+      c.m.position.addScaledVector(c.v, dt);
+      c.m.rotation.x += c.spin.x * dt;
+      c.m.rotation.y += c.spin.y * dt;
+      if (c.life > 1.4) {
+        scene.remove(c.m);
+        coals.splice(i, 1);
+      }
+    }
+  }
+
   function act(kind) {
     if (!mixer) return;
     if (kind === 'idle') return fadeTo('idle');
+    if (kind === 'naughty') {
+      if (!actions.naughty) return;
+      shots = [0.55, 0.62, 0.69].map((at) => ({ at, done: false }));
+      return fadeTo('naughty', { once: true, reps: 1, fade: 0.2 });
+    }
     if (kind === 'talk') {
       // as a button: talk for one loop and return
       return fadeTo('talk', { once: true, reps: 2 });
@@ -223,8 +397,17 @@ export function initStage(root, { reduced = false, onProgress, onReady, onError 
         const clip = THREE.AnimationClip.findByName(gltf.animations, clipName);
         if (clip) actions[k] = mixer.clipAction(removeDrift(clip));
       }
-      mixer.addEventListener('finished', settle);
+      mixer.addEventListener('finished', (e) => {
+        if (e.action === actions.naughty) holster();
+        settle();
+      });
       fadeTo('idle');
+      bones = {
+        hand: model.getObjectByName('RightHand'),
+        fore: model.getObjectByName('RightForeArm'),
+        spine: model.getObjectByName('Spine02'),
+      };
+      loadProps();
       if (!reduced) {
         // wave hello when the splash lifts, not behind it
         const hello = () => setTimeout(() => act('wave'), 500);
@@ -302,7 +485,8 @@ export function initStage(root, { reduced = false, onProgress, onReady, onError 
       spin += spinVel;
       if (performance.now() - lastInteract > 2500) spin += (0 - spin) * 0.02; // drift back to face camera
     }
-    holder.rotation.y = spin;
+    if (!gunInHand) aimYaw *= 0.92; // turn back after holstering
+    holder.rotation.y = spin + aimYaw;
 
     const pulse = 0.75 + Math.sin(t * 2.2) * 0.2;
     ring.material.opacity = pulse;
@@ -321,6 +505,10 @@ export function initStage(root, { reduced = false, onProgress, onReady, onError 
     }
     snowGeo.attributes.position.needsUpdate = true;
 
+    if (mixer) {
+      holder.updateMatrixWorld(true);
+      updateProps(dt);
+    }
     renderer.render(scene, camera);
   }
 

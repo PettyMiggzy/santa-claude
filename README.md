@@ -3,7 +3,7 @@
 The website for **$SANTA**: a chrome-plated AI Santa on Solana who talks back, remembers you, and keeps score on the Naughty-or-Nice list.
 
 - **Splash**: night sky over the workshop, the neon sleigh crossing the screen, a boot log tied to the real 3D download, and an *Enter the workshop* button that turns the sound on.
-- **3D Santa** made from the project art with [Meshy](https://www.meshy.ai): rigged, with 6 animation clips (idle, wave, dance, cheer, talk, YMCA). He reacts to the chat.
+- **3D Santa** made from the project art with [Meshy](https://www.meshy.ai): rigged, with idle, wave, dance, cheer, talk, YMCA and bow. His gift sack sits at his feet and his candy-cane Naughty List blaster is slung on his back: be rude and he draws it, aims at you and fires coal. He reacts to the chat.
 - **Talk to Santa**: streaming chat powered by [Venice](https://venice.ai), with a Nice-o-meter and on-device memory (his name for you, the conversation).
 - **Santa's voice**: every reply is spoken with Venice text-to-speech (Kokoro, `am_santa` voice). If Venice can't answer, the browser's own voice takes over. Each reply has a 🔊 replay button.
 - **Sound**: a music-box medley of public-domain carols, sleigh bells and small UI sounds, all synthesized in the browser (no audio files to license). Toggle in the header.

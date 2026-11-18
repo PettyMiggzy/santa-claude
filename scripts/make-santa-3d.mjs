@@ -30,7 +30,7 @@ const VIEWS_PROMPT =
 
 // Calm, natural clips from the Meshy library (GET /openapi/v1/animations/library?search=wave).
 // The clip names they produce must match CLIPS in src/stage.js.
-const ACTIONS = [11 /* Idle 1 */, 290 /* Wave One Hand */, 405 /* Joyful Dance with Hand Sway */, 61 /* Happy Jump */, 313 /* Talk with Hands Open */, 596 /* YMCA */, 42 /* Gentlemans Bow */];
+const ACTIONS = [11 /* Idle 1 */, 290 /* Wave One Hand */, 405 /* Joyful Dance with Hand Sway */, 61 /* Happy Jump */, 313 /* Talk with Hands Open */, 596 /* YMCA */, 42 /* Gentlemans Bow */, 222 /* Draw and Shoot from Back (naughty) */, 95 /* Gun Hold */];
 
 const dataUri = async (file) => {
   const ext = path.extname(file).slice(1).replace('jpg', 'jpeg');
