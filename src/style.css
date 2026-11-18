@@ -408,7 +408,7 @@ button { font: inherit; color: inherit; }
   inset: 0;
   background: linear-gradient(90deg, rgba(4, 6, 12, 0.72) 0%, rgba(4, 6, 12, 0.35) 55%, rgba(4, 6, 12, 0.25) 100%);
 }
-.sleigh { position: absolute; left: 0; top: 15%; width: 900px; max-width: none; height: auto; opacity: 0; mix-blend-mode: screen; transform-origin: 0 50%; will-change: transform, opacity; z-index: 1; }
+.sleigh { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; z-index: 1; }
 @media (max-width: 960px) { .world::after { background: rgba(4, 6, 12, 0.5); } }
 
 /* snow falls behind the content cards (their frosted glass blurs it); cursor sparkles stay on top */
@@ -439,7 +439,7 @@ button { font: inherit; color: inherit; }
     radial-gradient(60% 55% at 50% 52%, rgba(2, 4, 10, 0.78) 0%, rgba(2, 4, 10, 0.35) 70%, rgba(2, 4, 10, 0.6) 100%),
     linear-gradient(180deg, rgba(2, 4, 10, 0.2), rgba(2, 4, 10, 0.75));
 }
-.splash-sleigh { position: absolute; top: 9%; left: 0; width: min(62vw, 720px); height: auto; mix-blend-mode: screen; animation: splash-fly 12s linear infinite; opacity: 0; }
+.splash-sleigh { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; }
 @keyframes splash-fly {
   0% { transform: translate3d(105vw, 40px, 0) rotate(-4deg); opacity: 0; }
   6% { opacity: 1; }

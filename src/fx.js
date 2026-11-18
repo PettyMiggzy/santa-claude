@@ -2,6 +2,7 @@
 // trail + snow burst for the cursor, a candy-cane cursor, and the neon sleigh
 // flying across the sky now and then. Calm and sparse with reduced motion.
 import { sfx } from './sound.js';
+import { createSleigh } from './sleigh.js';
 
 const CANE = `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30"><defs><pattern id="s" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(40)"><rect width="5" height="5" fill="#fff"/><rect width="2.3" height="5" fill="#ff2e4d"/></pattern></defs><path d="M4 3v19.5l5.6-5.1 3.6 8.1 3.7-1.6-3.6-7.9 7.7-.3z" fill="none" stroke="#2ff5d4" stroke-opacity=".55" stroke-width="4" stroke-linejoin="round"/><path d="M4 3v19.5l5.6-5.1 3.6 8.1 3.7-1.6-3.6-7.9 7.7-.3z" fill="url(#s)" stroke="#06121c" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
 const POINT = `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 30 30"><path d="M4 3v19.5l5.6-5.1 3.6 8.1 3.7-1.6-3.6-7.9 7.7-.3z" fill="none" stroke="#2ff5d4" stroke-opacity=".6" stroke-width="4.5" stroke-linejoin="round"/><path d="M4 3v19.5l5.6-5.1 3.6 8.1 3.7-1.6-3.6-7.9 7.7-.3z" fill="#2ff5d4" stroke="#06121c" stroke-width="1.5" stroke-linejoin="round"/><path d="M23 2l1.1 2.7L27 6l-2.9 1.1L23 10l-1.1-2.9L19 6l2.9-1.3z" fill="#fff"/></svg>`;
@@ -218,23 +219,13 @@ export function initFx({ reduced = false } = {}) {
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
 
-  const sleigh = world?.querySelector('[data-sleigh]');
+  const sleighCv = world?.querySelector('[data-sleigh]');
+  let teamScale = 0.5;
+  const team = sleighCv && !reduced ? createSleigh(sleighCv, { width: () => Math.min(window.innerWidth * 0.9, 760) * teamScale }) : null;
   function flyover({ sound = true } = {}) {
-    if (!sleigh || reduced || document.visibilityState !== 'visible') return;
-    const w = window.innerWidth;
-    const top = window.innerHeight * (0.08 + Math.random() * 0.22);
-    const scale = 0.45 + Math.random() * 0.35;
-    sleigh.style.top = `${top}px`;
-    sleigh.animate(
-      [
-        { transform: `translate3d(${w + 40}px, 0, 0) scale(${scale}) rotate(-3deg)`, opacity: 0 },
-        { opacity: 1, offset: 0.08 },
-        { transform: `translate3d(${w * 0.45}px, -${40 * scale}px, 0) scale(${scale}) rotate(-6deg)`, offset: 0.5 },
-        { opacity: 1, offset: 0.92 },
-        { transform: `translate3d(-${900 * scale + 60}px, -${110 * scale}px, 0) scale(${scale}) rotate(-2deg)`, opacity: 0 },
-      ],
-      { duration: 9000 + Math.random() * 3000, easing: 'linear' },
-    );
+    if (!team || document.visibilityState !== 'visible') return;
+    teamScale = 0.55 + Math.random() * 0.4;
+    team.fly({ top: window.innerHeight * (0.08 + Math.random() * 0.2), dur: 9000 + Math.random() * 3000 });
     if (sound) sfx('whoosh');
   }
   let flyTimer = 0;

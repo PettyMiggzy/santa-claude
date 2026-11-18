@@ -1,6 +1,7 @@
 // The splash: night sky over the workshop, the sleigh crossing the moon, a boot
 // log tied to the real 3D download, and the Enter button that unlocks sound.
 import { unlock, setPrefs, start, sfx, speak, tryAutoplay, getPrefs } from './sound.js';
+import { createSleigh } from './sleigh.js';
 
 const LINES = [
   ['booting santa.exe', ''],
@@ -27,6 +28,11 @@ export function initSplash({ reduced = false, fx } = {}) {
   let typedLines = 0;
   let modelLine = null;
   let entered = false;
+
+  // the animated sleigh team looping across the splash sky
+  const sleighCv = el.querySelector('[data-splash-sleigh]');
+  const sleigh = sleighCv && !reduced ? createSleigh(sleighCv, { width: () => Math.min(window.innerWidth * 0.68, 760) }) : null;
+  sleigh?.loop({ top: () => Math.max(24, window.innerHeight * 0.06) });
 
   const progress = () => {
     const p = (typedLines / LINES.length) * 0.45 + (modelReady ? 1 : modelP) * 0.55;
@@ -105,6 +111,7 @@ export function initSplash({ reduced = false, fx } = {}) {
     el.classList.add('out');
     setTimeout(
       () => {
+        sleigh?.destroy();
         el.remove();
         root.classList.remove('splashing');
         window.dispatchEvent(new Event('santa:entered'));
