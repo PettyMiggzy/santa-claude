@@ -8,12 +8,13 @@ import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.j
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 
 const MODEL_URL = '/models/santa.glb';
+// Clip names inside santa.glb (Meshy animation library ids 11, 290, 405, 298, 313, 596).
 const CLIPS = {
-  idle: 'Idle',
-  wave: 'Big_Wave_Hello',
-  dance: 'FunnyDancing_01',
+  idle: 'Idle_02',
+  wave: 'Wave_One_Hand',
+  dance: 'Joyful_Dance_with_Hand_Sway',
   ymca: 'ymca_dance',
-  cheer: 'Victory_Cheer',
+  cheer: 'Cheer_with_Both_Hands_Up',
   talk: 'Talk_with_Hands_Open',
 };
 const HEIGHT = 1.8; // world units the model is scaled to
@@ -164,21 +165,26 @@ export function initStage(root, { reduced = false, onProgress, onReady, onError 
       // as a button: talk for one loop and return
       return fadeTo('talk', { once: true, reps: 2 });
     }
-    const reps = kind === 'dance' || kind === 'ymca' ? 2 : 1;
+    const reps = { dance: 1, ymca: 2, cheer: 2, wave: 1 }[kind] ?? 1;
     fadeTo(kind, { once: true, reps });
   }
 
-  // Keep clips in place: drop horizontal root motion so Santa stays on his ring.
-  function pinRootMotion(clip) {
+  // Keep Santa on his ring without killing natural weight shifts: remove only the
+  // net horizontal drift of the hips over the clip (a linear ramp), so the body can
+  // still sway and the feet stay planted instead of sliding.
+  function removeDrift(clip) {
     for (const track of clip.tracks) {
       if (!track.name.endsWith('.position')) continue;
       if (!/hips|root|pelvis/i.test(track.name)) continue;
       const v = track.values;
-      const x0 = v[0];
-      const z0 = v[2];
-      for (let i = 0; i < v.length; i += 3) {
-        v[i] = x0;
-        v[i + 2] = z0;
+      const n = v.length / 3;
+      if (n < 2) continue;
+      const dx = v[(n - 1) * 3] - v[0];
+      const dz = v[(n - 1) * 3 + 2] - v[2];
+      for (let i = 0; i < n; i++) {
+        const f = i / (n - 1);
+        v[i * 3] -= dx * f;
+        v[i * 3 + 2] -= dz * f;
       }
     }
     return clip;
@@ -214,7 +220,7 @@ export function initStage(root, { reduced = false, onProgress, onReady, onError 
       mixer = new THREE.AnimationMixer(model);
       for (const [k, clipName] of Object.entries(CLIPS)) {
         const clip = THREE.AnimationClip.findByName(gltf.animations, clipName);
-        if (clip) actions[k] = mixer.clipAction(pinRootMotion(clip));
+        if (clip) actions[k] = mixer.clipAction(removeDrift(clip));
       }
       mixer.addEventListener('finished', settle);
       fadeTo('idle');
@@ -280,7 +286,8 @@ export function initStage(root, { reduced = false, onProgress, onReady, onError 
   let visible = true;
   let t = 0;
   function frame() {
-    const dt = Math.min(clock.getDelta(), 0.05);
+    // cap only big hiccups (tab switches); slow devices still play at real speed
+    const dt = Math.min(clock.getDelta(), 0.25);
     t += dt;
     mixer?.update(dt);
 
@@ -289,7 +296,7 @@ export function initStage(root, { reduced = false, onProgress, onReady, onError 
       spin += spinVel;
       if (performance.now() - lastInteract > 2500) spin += (0 - spin) * 0.02; // drift back to face camera
     }
-    holder.rotation.y = spin + (reduced ? 0 : Math.sin(t * 0.35) * 0.12);
+    holder.rotation.y = spin;
 
     const pulse = 0.75 + Math.sin(t * 2.2) * 0.2;
     ring.material.opacity = pulse;

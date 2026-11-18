@@ -2,7 +2,7 @@
 
 The website for **$SANTA**: a chrome-plated AI Santa on Solana who talks back, remembers you, and keeps score on the Naughty-or-Nice list.
 
-- **3D Santa** made from the project art with [Meshy](https://www.meshy.ai): rigged, with 6 animation clips (idle, wave, dance, YMCA, cheer, talk). He reacts to the chat.
+- **3D Santa** made from the project art with [Meshy](https://www.meshy.ai): rigged, with 6 animation clips (idle, wave, dance, cheer, talk, YMCA). He reacts to the chat.
 - **Talk to Santa**: streaming chat powered by [Venice](https://venice.ai), with a Nice-o-meter and on-device memory (his name for you, the conversation).
 - **Santa in characters**: an animated text-art version of Santa, drawn in the browser.
 - **Workshop gallery**, **token section** with how-to-buy steps, and a **contract address bar** with copy, Solscan and chart links.
@@ -64,7 +64,7 @@ Keys are only read on the server (`server/santa.js`) and never reach the browser
 MESHY_API_KEY=msy_... npm run make-santa
 ```
 
-This runs art → clean full-body reference → image to 3D → rigging → animations → compressed `public/models/santa.glb`, about 70–100 Meshy credits per run. Add `-- --ref art/santa-fullbody-reference.png` to skip the first step. Clip choices are in `scripts/make-santa-3d.mjs` (`ACTIONS`); their names must match `CLIPS` in `src/stage.js`.
+This runs art → stocky front reference → side and back views → 3D built from all views → rigging → animations → compressed `public/models/santa.glb`, about 80–100 Meshy credits per run. Building from several views is what gives Santa real depth (a single front image gave flat, paper-thin arms). Add `-- --ref art/santa-fullbody-reference.png` to reuse the current front reference. Clip choices are in `scripts/make-santa-3d.mjs` (`ACTIONS`); their names must match `CLIPS` in `src/stage.js`.
 
 ## Project layout
 
