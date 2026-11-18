@@ -135,7 +135,7 @@ export function initSplash({ reduced = false, fx } = {}) {
     enter(false);
   });
   // the first tap anywhere on the splash counts as "enter with sound"
-  el.addEventListener('pointerdown', (e) => {
+  el.addEventListener('click', (e) => { // click, not pointerdown: iPhones only allow sound on a finished tap
     if (e.target.closest('[data-enter-silent]')) return;
     enter(true);
   });

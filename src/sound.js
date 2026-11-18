@@ -119,12 +119,57 @@ function build() {
 /** Call from a click/tap handler. Safe to call many times. */
 export function unlock() {
   try {
+    // iPhone: play through the media channel so the silent switch doesn't mute us
+    if (navigator.audioSession) navigator.audioSession.type = 'playback';
     if (!ctx) build();
-    if (ctx.state === 'suspended') ctx.resume();
+    if (ctx.state !== 'running') ctx.resume();
+    kickMediaChannel();
   } catch {
     /* no Web Audio */
   }
 }
+
+// Older iPhones: briefly playing an <audio> element during the tap moves the page
+// onto the media channel too (same goal as audioSession above).
+let kicked = false;
+function kickMediaChannel() {
+  if (kicked) return;
+  kicked = true;
+  try {
+    const rate = 8000;
+    const n = 800;
+    const buf = new ArrayBuffer(44 + n * 2);
+    const v = new DataView(buf);
+    const w = (o, s) => [...s].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+    w(0, 'RIFF'); v.setUint32(4, 36 + n * 2, true); w(8, 'WAVE'); w(12, 'fmt ');
+    v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+    w(36, 'data'); v.setUint32(40, n * 2, true);
+    const a = new Audio(URL.createObjectURL(new Blob([buf], { type: 'audio/wav' })));
+    a.setAttribute('playsinline', '');
+    a.volume = 0.01;
+    a.play().catch(() => {});
+  } catch {
+    /* fine */
+  }
+}
+
+if (new URLSearchParams(location.search).has('debug')) {
+  window.__sound = () => ({ state: ctx?.state || 'none', musicOn, prefs: { ...prefs } });
+}
+
+// If the first unlock was blocked, any later tap tries again and starts the music.
+['click', 'touchend', 'keydown'].forEach((type) =>
+  document.addEventListener(
+    type,
+    () => {
+      if (!ctx || ctx.state === 'running') return;
+      unlock();
+      ctx.resume().then(() => start()).catch(() => {});
+    },
+    { passive: true },
+  ),
+);
 
 /**
  * Try to make sound before any click. Browsers only allow this for sites a
