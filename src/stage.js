@@ -18,6 +18,7 @@ const CLIPS = {
   talk: 'Talk_with_Hands_Open',
   bow: 'Gentlemans_Bow',
   naughty: 'Draw_and_Shoot_from_Back',
+  aim: 'Gun_Hold_Left_Turn',
 };
 const HEIGHT = 1.8; // world units the model is scaled to
 
@@ -165,7 +166,6 @@ export function initStage(root, { reduced = false, onProgress, onReady, onError 
   let gun = null;
   let muzzle = null;
   let gunInHand = false;
-  let shots = [];
   const V = () => new THREE.Vector3();
   const tA = V();
   const tB = V();
@@ -228,8 +228,8 @@ export function initStage(root, { reduced = false, onProgress, onReady, onError 
     bones.spine.getWorldPosition(tA);
     // diagonally across his back, barrel up over the right shoulder
     const back = V().set(0, 0, -1).applyQuaternion(holder.quaternion);
-    gun.position.copy(tA).addScaledVector(back, 0.24).add(V().set(0, -0.05, 0));
-    const dir = V().set(0.55, 0.83, 0).applyQuaternion(holder.quaternion).normalize();
+    gun.position.copy(tA).addScaledVector(back, 0.2).add(V().set(0, 0.06, 0));
+    const dir = V().set(0.32, 0.95, 0).applyQuaternion(holder.quaternion).normalize();
     const x = dir.clone().negate();
     const z = back.clone();
     const y = V().crossVectors(z, x).normalize();
@@ -237,29 +237,74 @@ export function initStage(root, { reduced = false, onProgress, onReady, onError 
     gun.quaternion.setFromRotationMatrix(mBasis.makeBasis(x, y, z));
     gun.position.addScaledVector(dir, -0.12);
     bones.spine.attach(gun);
+    gun.visible = false; // stowed on his back, out of sight until he reaches for it
   }
 
   function gunToHand() {
     gunInHand = true;
     scene.attach(gun);
+    gun.visible = true;
   }
 
-  let aimYaw = 0; // extra turn so Santa aims at the viewer
-  function followHand() {
+  // ── the naughty sequence: draw (over-the-shoulder clip) → two-handed aim at the
+  // viewer (rifle-hold pose) → three coal shots with recoil → holster
+  const AIM = { switchAt: 0.42, pose: 0.06, hold: 2.6, shots: [0.55, 1.05, 1.55], offAxis: 0.55 };
+  let naughty = null; // { phase: 'draw' | 'aim', t, fired }
+  let aimYaw = 0; // extra turn so Santa faces the viewer while aiming
+  let recoil = 0;
+  let debugFreeze = false;
+
+  function startAim() {
+    const a = actions.aim;
+    if (!a) return endNaughty();
+    a.reset();
+    a.setLoop(THREE.LoopOnce, 1);
+    a.clampWhenFinished = true;
+    a.enabled = true;
+    a.setEffectiveWeight(1);
+    a.play();
+    a.time = AIM.pose * a.getClip().duration;
+    a.paused = true; // hold the rifle stance
+    a.crossFadeFrom(actions.naughty, 0.22, true);
+    current = a;
+    naughty = { phase: 'aim', t: 0, fired: 0 };
+    busyUntil = performance.now() + AIM.hold * 1000;
+  }
+
+  function endNaughty() {
+    naughty = null;
+    holster();
+    fadeTo(talking ? 'talk' : 'idle', { fade: 0.35 });
+  }
+
+  function followHand(dt) {
     bones.hand.getWorldPosition(tA);
-    bones.fore.getWorldPosition(tB);
-    const dir = tB.subVectors(tA, tB).normalize();
-    const a = actions.naughty;
-    if (a && current === a) {
-      const f = a.time / a.getClip().duration;
-      if (f > 0.4 && f < 0.85) {
-        aimYaw -= Math.atan2(dir.x, dir.z) * 0.12; // swing the barrel toward the camera
-        dir.y *= 0.2; // and level it out
-        dir.normalize();
-      }
+    let dir;
+    if (naughty?.phase === 'aim' && bones.lhand) {
+      // aim line: from his chest out through his hands (both hands sit on the gun)
+      bones.lhand.getWorldPosition(tB);
+      const mid = V().addVectors(tA, tB).multiplyScalar(0.5);
+      const chest = V();
+      bones.spine.getWorldPosition(chest);
+      dir = V().subVectors(mid, chest);
+      dir.y = 0;
+      dir.normalize();
+      tA.copy(mid);
+      // turn Santa so the barrel points at the viewer (a little off-axis so the gun reads)
+      const camDir = V().subVectors(camera.position, tA).setY(0).normalize();
+      const want = Math.atan2(camDir.x, camDir.z) + AIM.offAxis;
+      const have = Math.atan2(dir.x, dir.z);
+      let err = want - have;
+      err = Math.atan2(Math.sin(err), Math.cos(err));
+      aimYaw += err * Math.min(1, dt * 10);
+      dir.y = THREE.MathUtils.clamp(dir.y, -0.12, 0.12);
+      dir.normalize();
+    } else {
+      bones.fore.getWorldPosition(tB);
+      dir = tB.subVectors(tA, tB).normalize();
     }
     gun.quaternion.setFromRotationMatrix(aimBasis(dir));
-    gun.position.copy(tA).addScaledVector(dir, 0.04);
+    gun.position.copy(tA).addScaledVector(dir, 0.03 - recoil * 0.08);
   }
 
   // coal + muzzle flash
@@ -302,18 +347,24 @@ export function initStage(root, { reduced = false, onProgress, onReady, onError 
   }
 
   function updateProps(dt) {
-    const a = actions.naughty;
-    if (gun && a && current === a && a.isRunning()) {
-      const f = a.time / a.getClip().duration;
-      if (!gunInHand && f > 0.2) gunToHand();
-      for (let i = 0; i < shots.length; i++) {
-        if (!shots[i].done && f >= shots[i].at) {
-          shots[i].done = true;
+    if (naughty && gun && !debugFreeze) {
+      if (naughty.phase === 'draw') {
+        const a = actions.naughty;
+        const f = a.time / a.getClip().duration;
+        if (!gunInHand && f > 0.2) gunToHand();
+        if (f >= AIM.switchAt) startAim();
+      } else if (naughty.phase === 'aim') {
+        naughty.t += dt;
+        while (naughty.fired < AIM.shots.length && naughty.t >= AIM.shots[naughty.fired]) {
+          naughty.fired++;
+          recoil = 1;
           fire();
         }
+        if (naughty.t >= AIM.hold) endNaughty();
       }
     }
-    if (gun && gunInHand) followHand();
+    recoil *= Math.pow(0.0005, dt); // snappy recoil decay
+    if (gun && gunInHand) followHand(dt);
     for (let i = coals.length - 1; i >= 0; i--) {
       const c = coals[i];
       c.life += dt;
@@ -332,8 +383,8 @@ export function initStage(root, { reduced = false, onProgress, onReady, onError 
     if (!mixer) return;
     if (kind === 'idle') return fadeTo('idle');
     if (kind === 'naughty') {
-      if (!actions.naughty) return;
-      shots = [0.55, 0.62, 0.69].map((at) => ({ at, done: false }));
+      if (!actions.naughty || naughty) return;
+      naughty = { phase: 'draw', t: 0, fired: 0 };
       return fadeTo('naughty', { once: true, reps: 1, fade: 0.2 });
     }
     if (kind === 'talk') {
@@ -398,12 +449,13 @@ export function initStage(root, { reduced = false, onProgress, onReady, onError 
         if (clip) actions[k] = mixer.clipAction(removeDrift(clip));
       }
       mixer.addEventListener('finished', (e) => {
-        if (e.action === actions.naughty) holster();
+        if (naughty) return; // the naughty sequence ends itself
         settle();
       });
       fadeTo('idle');
       bones = {
         hand: model.getObjectByName('RightHand'),
+        lhand: model.getObjectByName('LeftHand'),
         fore: model.getObjectByName('RightForeArm'),
         spine: model.getObjectByName('Spine02'),
       };
@@ -487,6 +539,7 @@ export function initStage(root, { reduced = false, onProgress, onReady, onError 
     }
     if (!gunInHand) aimYaw *= 0.92; // turn back after holstering
     holder.rotation.y = spin + aimYaw;
+    holder.position.z = -recoil * 0.05; // recoil kick
 
     const pulse = 0.75 + Math.sin(t * 2.2) * 0.2;
     ring.material.opacity = pulse;
@@ -532,6 +585,53 @@ export function initStage(root, { reduced = false, onProgress, onReady, onError 
     if (performance.now() < busyUntil) return; // let a wave/cheer finish first
     settle();
   });
+
+  // ?debug: freeze any move at an exact point (used to check animations)
+  if (new URLSearchParams(location.search).has('debug')) {
+    window.__santa = {
+      act,
+      seek(kind, f) {
+        // kind 'naughty' f<switchAt: draw phase; kind 'aim' f = seconds into the aim (0..hold)
+        debugFreeze = true;
+        mixer.stopAllAction();
+        if (kind === 'aim') {
+          naughty = { phase: 'draw' };
+          gunToHand();
+          actions.naughty.reset().play();
+          startAim();
+          mixer.update(0.3);
+          actions.naughty.stop();
+          naughty.t = f;
+          recoil = 0;
+          mixer.timeScale = 0;
+          return true;
+        }
+        const a = actions[kind];
+        if (!a) return false;
+        naughty = null;
+        a.reset().play();
+        a.setEffectiveWeight(1);
+        current = a;
+        if (kind === 'naughty') {
+          naughty = { phase: 'draw' };
+          if (f > 0.2) gunToHand();
+          else holster();
+        } else holster();
+        a.time = f * a.getClip().duration;
+        mixer.timeScale = 0;
+        mixer.update(0);
+        return true;
+      },
+      clips: () => Object.keys(actions),
+      state: () => ({
+        current: current?.getClip().name,
+        naughty,
+        aimYaw,
+        weights: Object.fromEntries(Object.entries(actions).map(([k, a]) => [k, +a.getEffectiveWeight().toFixed(2)])),
+        running: Object.entries(actions).filter(([, a]) => a.isRunning()).map(([k]) => k),
+      }),
+    };
+  }
 
   return { act };
 }
