@@ -23,6 +23,20 @@ export const SITE = {
     x: '', // e.g. 'https://x.com/santaclaudeai'
     telegram: '', // e.g. 'https://t.me/santaclaudeai'
   },
+
+  // 🍪 Cookies: Santa's AI credits. Daily allowance, resets 00:00 UTC.
+  perks: {
+    freeMessagesPerDay: 10, // no wallet
+    walletCookiesPerDay: 25, // signed in, not holding (yet)
+    tiers: [
+      // daily cookie drop by $SANTA held (assumes a 1B supply; edit to taste)
+      { name: 'Elf', emoji: '🧝', min: 100_000, cookies: 150 },
+      { name: 'Reindeer', emoji: '🦌', min: 1_000_000, cookies: 500 },
+      { name: 'North Pole VIP', emoji: '🎅', min: 10_000_000, cookies: 2000 },
+    ],
+    cost: { message: 1, clip: 100 },
+    initialSupply: 1_000_000_000, // for the "burned so far" counter
+  },
 };
 
 export function link(key) {

@@ -11,6 +11,16 @@ The website for **$SANTA**: a chrome-plated AI Santa on Solana who talks back, r
 - **Santa in characters**: an animated text-art version of Santa, drawn in the browser.
 - **Workshop gallery**, **token section** with how-to-buy steps, **live numbers** (price, market cap, volume, liquidity from DexScreener once the contract address is set) and a **contract address bar** with copy, Solscan and chart links.
 
+## Holders, cookies 🍪 and Santa Clips
+
+Same loop as clankuwu: **cookies** are the credit you spend (1 per chat message, voice included; 100 per Santa Clip), and **$SANTA** is how you get them without buying: holders get a daily cookie drop that grows with their balance. Part of the AI revenue buying back and burning $SANTA is shown as *planned*, with a live "burned so far" counter (initial supply minus current onchain supply).
+
+- Visitors without a wallet get a few free messages a day.
+- Anyone can **sign in with a Solana wallet** (Phantom, Solflare, Backpack): a free signature, no transaction. Phones get "Open in Phantom/Solflare" links.
+- Balances are read onchain at sign-in (cached 10 minutes) once `contractAddress` is set.
+- Tiers, costs and daily amounts are all in `src/config.js` → `perks`.
+- **Santa Clips**: visitors type a scene and get a ~6 second video of Santa (image-to-video from his reference image). Cookies are refunded automatically if a clip fails.
+
 ## Edit the token info
 
 Everything token-related lives in [`src/config.js`](src/config.js): ticker, chain, contract address, buy/chart/explorer links, X and Telegram. Santa's chat reads the same file, so he always gives out the right address.
@@ -55,6 +65,10 @@ Build command `npm install && npm run build`, start command `npm start`, and set
 | `VENICE_MODEL` | no | Model behind Santa. Default `deepseek-v4-1-flash-1017` (cheap, fast, stays in character). |
 | `VENICE_TTS_MODEL` | no | Voice model. Default `tts-kokoro` (about $3.50 per million characters). |
 | `VENICE_TTS_VOICE` | no | Voice. Default `am_santa`. |
+| `VENICE_VIDEO_MODEL` | no | Model for Santa Clips. Default `grok-imagine-1-5-lite-image-to-video` (about $0.19 per 6s clip). |
+| `KV_REST_API_URL` + `KV_REST_API_TOKEN` | strongly recommended | Upstash Redis (Vercel → Storage → Upstash). Stores daily cookie use and clip jobs. Without it, limits live in memory and reset whenever Vercel spins up a new instance. `UPSTASH_REDIS_REST_URL`/`_TOKEN` also work. |
+| `SOLANA_RPC_URL` | recommended | Solana RPC used to read $SANTA balances and supply. Defaults to the public mainnet RPC, which rate-limits; a free Helius or QuickNode URL is better. |
+| `SESSION_SECRET` | recommended | Any long random string; signs wallet sessions. Falls back to one derived from `VENICE_API_KEY`. |
 | `MESHY_API_KEY` | only for `npm run make-santa` | Regenerates the 3D model. |
 
 Keys are only read on the server (`server/santa.js`) and never reach the browser.

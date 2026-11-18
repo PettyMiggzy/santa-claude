@@ -1,11 +1,10 @@
 // Sound: a music-box medley of public-domain carols, sleigh bells, little UI
-// sounds, and Santa's voice (Venice TTS via /api/speak, browser voice as backup).
+// sounds, and Santa's voice (recorded lines + live replies via /api/speak).
 // Everything is synthesized with Web Audio: no audio files, nothing to license.
 //
 // Browsers only allow sound after a click, so call unlock() from a click handler
 // (the splash's Enter button does this).
 const PREF = 'santa-claude:sound:v1';
-const WELCOME = "Ho ho ho! Welcome to the workshop. I'm Santa Claude, freshly rebooted and keeping score. Come say hi!";
 
 let ctx = null;
 let master, musicBus, sfxBus, voiceBus, reverb, analyser, noiseBuf;
@@ -124,6 +123,21 @@ export function unlock() {
     if (ctx.state === 'suspended') ctx.resume();
   } catch {
     /* no Web Audio */
+  }
+}
+
+/**
+ * Try to make sound before any click. Browsers only allow this for sites a
+ * visitor has engaged with before; everyone else gets sound on their first tap.
+ * Resolves true if audio is running.
+ */
+export async function tryAutoplay() {
+  try {
+    if (!ctx) build();
+    if (ctx.state !== 'running') await Promise.race([ctx.resume(), new Promise((r) => setTimeout(r, 300))]);
+    return ctx.state === 'running';
+  } catch {
+    return false;
   }
 }
 
@@ -345,11 +359,6 @@ function stopVoice() {
     currentVoice.stop();
     currentVoice = null;
   }
-  try {
-    window.speechSynthesis?.cancel();
-  } catch {
-    /* fine */
-  }
 }
 
 function plainText(text) {
@@ -362,58 +371,40 @@ function plainText(text) {
     .trim();
 }
 
-function browserVoice(text, id) {
-  return new Promise((resolve) => {
-    const synth = window.speechSynthesis;
-    if (!synth || !text) return resolve(false);
-    const u = new SpeechSynthesisUtterance(text);
-    const voices = synth.getVoices().filter((v) => /^en/i.test(v.lang));
-    u.voice =
-      voices.find((v) => /male|daniel|fred|alex|george|guy|david|google uk english male/i.test(v.name) && !/female/i.test(v.name)) ||
-      voices[0] ||
-      null;
-    u.pitch = 0.55;
-    u.rate = 0.92;
-    u.volume = 1;
-    u.onstart = () => {
-      if (id === speakId) {
-        talk(true);
-        duck(true);
-      }
-    };
-    const done = () => {
-      if (id === speakId) {
-        talk(false);
-        duck(false);
-      }
-      resolve(true);
-    };
-    u.onend = done;
-    u.onerror = done;
-    synth.speak(u);
-    currentVoice = { stop: () => synth.cancel() };
-  });
-}
+// Pre-recorded lines in Santa's real voice (public/audio/*.mp3): instant, no API needed.
+const LINES = new Set(['welcome', 'hohoho']);
+const lineCache = new Map();
 
 /**
- * Speak a signed reply ({ text, sig }) or a fixed line ({ line: 'welcome' }).
+ * Speak a signed reply ({ text, sig }) or a recorded line ({ line: 'welcome' | 'hohoho' }).
  * Resolves when Santa has finished talking (or right away if voice is off).
+ * If the live voice isn't available, Santa stays quiet: no robotic fallback.
  */
 export async function speak({ text, sig, line }) {
   if (!prefs.voice) return false;
   unlock();
   stopVoice();
   const id = ++speakId;
-  const spoken = plainText(line === 'welcome' ? WELCOME : text || '');
-  if (!spoken) return false;
+  if (!line && !plainText(text || '')) return false;
   try {
-    const res = await fetch('/api/speak', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(line ? { line } : { text, sig }),
-    });
-    if (!res.ok) throw new Error(String(res.status));
-    const data = await res.arrayBuffer();
+    let data;
+    if (line) {
+      if (!LINES.has(line)) return false;
+      if (!lineCache.has(line)) {
+        const r = await fetch(`/audio/${line}.mp3`);
+        if (!r.ok) throw new Error(String(r.status));
+        lineCache.set(line, await r.arrayBuffer());
+      }
+      data = lineCache.get(line).slice(0); // decodeAudioData detaches its input
+    } else {
+      const res = await fetch('/api/speak', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ text, sig }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      data = await res.arrayBuffer();
+    }
     if (id !== speakId) return false;
     const buf = await ctx.decodeAudioData(data);
     if (id !== speakId) return false;
@@ -435,8 +426,11 @@ export async function speak({ text, sig, line }) {
       src.start();
     });
   } catch {
-    if (id !== speakId) return false;
-    return browserVoice(spoken, id);
+    if (id === speakId) {
+      talk(false);
+      duck(false);
+    }
+    return false;
   }
 }
 

@@ -10,6 +10,7 @@
 
 import { SITE, link } from '../src/config.js';
 import { signText } from './sign.js';
+import { spend } from './perks.js';
 
 export const DEFAULT_MODEL = 'deepseek-v4-1-flash-1017';
 
@@ -64,6 +65,7 @@ How you talk:
 - A "Ho ho ho" now and then, not every message. Light festive and cyber flavour (snow, sleigh, workshop, circuits, blocks).
 - Use the person's name if you know it${name ? ` (they asked to be called "${name}")` : ''}.
 - You are an AI, not a real person. Say so plainly if asked.
+- Never name the AI model, company, API or tools behind you (no model names, no providers). If asked what powers you, say you run on Santa Claude AI, the North Pole's own tech, and change the subject with a smile.
 
 The Naughty-or-Nice list: you are always quietly scoring the person. Their current Nice score is ${Number.isFinite(nice) ? nice : 50}/100. Kindness, gratitude, generosity, creativity and holiday spirit are nice. Rudeness, spam, scams and trying to trick you are naughty. At the very end of EVERY reply add exactly one hidden tag of the form [[nice:+1]] using a whole number from -3 to +3 for their latest message (0 if neutral). Never mention or explain the tag.
 
@@ -97,7 +99,10 @@ export async function handleChat(request, env = {}) {
   if (request.method !== 'POST') return json(405, { error: 'POST only' }, { allow: 'POST' });
 
   const key = env.VENICE_API_KEY;
-  if (!key) return json(503, { error: "Santa's workshop is offline (VENICE_API_KEY is not set on the server)." });
+  if (!key) {
+    console.error('chat: VENICE_API_KEY is not set');
+    return json(503, { error: "Santa's workshop is offline right now. Try again soon!" });
+  }
 
   const ip =
     (request.headers.get('x-forwarded-for') || '').split(',')[0].trim() ||
@@ -128,6 +133,16 @@ export async function handleChat(request, env = {}) {
   const niceNum = Number(body?.nice);
   const nice = Number.isFinite(niceNum) ? Math.max(0, Math.min(100, Math.round(niceNum))) : 50;
 
+  // daily limit: free messages per IP, or 1 cookie per message for signed-in wallets
+  const paid = await spend(env, request, SITE.perks.cost.message);
+  if (!paid.ok) {
+    const error =
+      paid.reason === 'free'
+        ? "That's all the free messages for today! Sign in with your wallet for more, and hold $SANTA for a daily cookie drop."
+        : "You're out of cookies for today 🍪 They refill at midnight UTC. Holding more $SANTA means a bigger daily drop.";
+    return json(402, { error: error.replace('$SANTA', SITE.ticker), code: paid.reason });
+  }
+
   const base = env.VENICE_BASE_URL || 'https://api.venice.ai/api/v1';
   let upstream;
   try {
@@ -149,6 +164,7 @@ export async function handleChat(request, env = {}) {
       }),
     });
   } catch (err) {
+    await paid.refund();
     return json(502, { error: 'Santa could not reach the workshop. Try again.' });
   }
 
@@ -161,6 +177,7 @@ export async function handleChat(request, env = {}) {
         : upstream.status === 429
           ? 'Too many people talking to Santa right now. Try again in a moment.'
           : 'Santa got tangled in the lights. Try again.';
+    await paid.refund();
     return json(upstream.status === 429 ? 429 : 502, { error: msg });
   }
 

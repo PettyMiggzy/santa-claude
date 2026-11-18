@@ -8,6 +8,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { handleChat } from './server/santa.js';
 import { handleSpeak } from './server/speak.js';
+import { handleAuth, handleMe } from './server/routes.js';
+import { handleClip } from './server/clip.js';
 import { nodeHandler } from './server/node-adapter.js';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), 'dist');
@@ -31,6 +33,9 @@ const TYPES = {
 
 const chat = nodeHandler((req) => handleChat(req, process.env));
 const speak = nodeHandler((req) => handleSpeak(req, process.env));
+const auth = nodeHandler((req) => handleAuth(req, process.env));
+const me = nodeHandler((req) => handleMe(req, process.env));
+const clip = nodeHandler((req) => handleClip(req, process.env));
 
 async function serveStatic(req, res) {
   let rel = decodeURIComponent(new URL(req.url, 'http://x').pathname);
@@ -65,6 +70,9 @@ http
   .createServer((req, res) => {
     if (req.url.startsWith('/api/chat')) return chat(req, res);
     if (req.url.startsWith('/api/speak')) return speak(req, res);
+    if (req.url.startsWith('/api/auth')) return auth(req, res);
+    if (req.url.startsWith('/api/me')) return me(req, res);
+    if (req.url.startsWith('/api/clip')) return clip(req, res);
     if (req.method !== 'GET' && req.method !== 'HEAD') return res.writeHead(405).end();
     serveStatic(req, res).catch(() => res.writeHead(500).end());
   })

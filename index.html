@@ -48,6 +48,7 @@
     <div class="boot-bar" aria-hidden="true"><span data-boot-bar></span></div>
     <p class="sr" id="splash-status" data-boot-status role="status">Santa is waking up.</p>
     <button class="btn btn-main btn-xl" type="button" data-enter><span aria-hidden="true">🔊</span> Enter the workshop</button>
+    <p class="mono-sm splash-hint">tap anywhere · sound on</p>
     <button class="link splash-silent" type="button" data-enter-silent>enter without sound</button>
   </div>
 </div>
@@ -63,9 +64,12 @@
     <nav class="nav" aria-label="Main">
       <a href="#talk">Talk to Santa</a>
       <a href="#chars">The Machine</a>
-      <a href="#workshop">Workshop</a>
+      <a href="#clips">Clips</a>
+      <a href="#perks">Holders</a>
       <a href="#token" data-ticker>$SANTA</a>
     </nav>
+    <button class="btn btn-sm signin-h" type="button" data-signin data-signin-header>Sign in</button>
+    <button class="me-chip" type="button" data-me-chip data-signout hidden title="Sign out"><b data-me-cookies>0</b> 🍪 <span class="mono-sm" data-me-addr></span></button>
     <button class="snd" type="button" data-sound aria-pressed="true" aria-label="Music and sounds">
       <svg class="on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/></svg>
       <svg class="off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>
@@ -125,6 +129,7 @@
             <input id="ask-input" name="q" maxlength="600" placeholder="Ask Santa anything…" required>
             <button class="btn btn-main" type="submit" data-send>Send</button>
           </form>
+          <p class="mono-sm chat-foot"><span><span data-quota></span> · <button type="button" class="link" data-signin data-when-out>sign in for more</button></span></p>
           <p class="mono-sm chat-foot"><span>Santa remembers you on this device only.</span><button type="button" class="link" data-forget>Make Santa forget me</button></p>
         </div>
       </section>
@@ -147,8 +152,9 @@
             <button type="button" class="pill" data-clip="ymca">YMCA</button>
             <button type="button" class="pill" data-clip="cheer">Cheer</button>
             <button type="button" class="pill" data-clip="talk">Talk</button>
+            <button type="button" class="pill" data-clip="bow">Bow</button>
           </div>
-          <p class="mono-sm cap"><span>Drag to spin him</span><span>3D · Meshy · rigged + animated</span></p>
+          <p class="mono-sm cap"><span>Drag to spin him</span><span>Live 3D · tap a move</span></p>
         </figcaption>
       </figure>
     </div>
@@ -188,6 +194,61 @@
       <figure class="tile t-c" data-rv><img src="/img/panel-2.webp" alt="Santa Claude reaching into a holographic gift interface" loading="lazy" width="1024" height="502"><figcaption class="mono-sm">03 · Wrapping protocol</figcaption></figure>
       <figure class="tile t-d" data-rv><img src="/img/santa-holo.webp" alt="Holographic Santa Claude offering an open hand" loading="lazy" width="1536" height="1024"><figcaption class="mono-sm">04 · Hologram mode</figcaption></figure>
       <figure class="tile t-e" data-rv><img src="/img/panel-3.webp" alt="Santa Claude watching his sleigh cross the full moon over a snowy town" loading="lazy" width="1024" height="507"><figcaption class="mono-sm">05 · Last delivery</figcaption></figure>
+    </div>
+  </section>
+
+  <!-- clips: Santa in any scene, paid with cookies -->
+  <section class="wrap" id="clips" aria-labelledby="h-clips">
+    <div class="sec-head">
+      <p class="mono eyebrow" data-rv>Santa Clips</p>
+      <h2 class="display h2" id="h-clips" data-rv>Put Santa <span class="grad">in a clip.</span></h2>
+      <p class="lede" data-rv>Type a scene. Santa stars in a short video you can download and post. Each clip costs <b data-cost-clip>100</b> 🍪, and holders get a cookie drop every day.</p>
+    </div>
+    <div class="clip-maker card" data-rv>
+      <form data-clip-form>
+        <label class="sr" for="clip-prompt">Describe the scene</label>
+        <textarea id="clip-prompt" maxlength="300" rows="2" placeholder="Santa surfing a giant snow wave at sunset…" required></textarea>
+        <div class="clip-row">
+          <div class="quick" data-clip-ideas>
+            <button type="button" class="pill">Santa DJing a neon North Pole rave</button>
+            <button type="button" class="pill">Santa launching his rocket sleigh into space</button>
+            <button type="button" class="pill">Santa dancing on a rooftop in the snow</button>
+          </div>
+          <button class="btn btn-main" type="submit" data-clip-go><span data-when-out>Sign in to film</span><span data-when-in hidden>Film it · <span data-cost-clip>100</span> 🍪</span></button>
+        </div>
+        <p class="mono-sm clip-status" data-clip-status role="status"></p>
+        <div class="boot-bar clip-bar" hidden><span data-clip-bar></span></div>
+      </form>
+      <div class="clip-out" data-clip-out></div>
+    </div>
+  </section>
+
+  <!-- holders: the loop -->
+  <section class="wrap" id="perks" aria-labelledby="h-perks">
+    <div class="sec-head">
+      <p class="mono eyebrow" data-rv>For holders</p>
+      <h2 class="display h2" id="h-perks" data-rv>Hold <span data-ticker>$SANTA</span>.<br><span class="grad">Get cookies every day.</span></h2>
+    </div>
+    <div class="token">
+      <article class="card door" data-rv>
+        <p class="mono eyebrow">The loop</p>
+        <p class="txt">🍪 <b>Cookies</b> are Santa's credits: you spend them to talk to him and to make Santa Clips. <span data-ticker>$SANTA</span> is how you get cookies without buying them: holders get a cookie drop every day, bigger the more you hold. Part of what the AI earns buys back and burns <span data-ticker>$SANTA</span> (planned).</p>
+        <dl class="facts">
+          <div><dt class="mono-sm">Message</dt><dd><span data-cost-message>1</span> 🍪</dd></div>
+          <div><dt class="mono-sm">Santa Clip</dt><dd><span data-cost-clip>100</span> 🍪</dd></div>
+          <div><dt class="mono-sm">Burned so far</dt><dd data-burned>at launch</dd></div>
+        </dl>
+        <p class="mono-sm perk-status" data-perk-status>Checking your list…</p>
+        <div class="ctas">
+          <button class="btn btn-main" type="button" data-signin data-when-out>Sign in with wallet</button>
+          <button class="btn" type="button" data-signout data-when-in hidden>Sign out</button>
+        </div>
+      </article>
+      <article class="card door" data-rv>
+        <p class="mono eyebrow">Daily cookie drop</p>
+        <ul class="tiers" data-tiers></ul>
+        <p class="mono-sm">Drops reset at midnight UTC. Signing in is free and moves no funds. Cookies are credits for this site only: not a token, not an investment, and never exchanged for cash.</p>
+      </article>
     </div>
   </section>
 
@@ -251,8 +312,18 @@
       <div><h4 data-ticker>$SANTA</h4><ul><li><a href="#token">How to get it</a></li><li data-link-li="chart"><a data-link="chart" target="_blank" rel="noopener noreferrer">Chart</a></li><li data-link-li="explorer"><a data-link="explorer" target="_blank" rel="noopener noreferrer">Solscan</a></li></ul></div>
       <div data-community><h4>Community</h4><ul><li data-link-li="x"><a data-link="x" target="_blank" rel="noopener noreferrer">X / Twitter</a></li><li data-link-li="telegram"><a data-link="telegram" target="_blank" rel="noopener noreferrer">Telegram</a></li></ul></div>
     </div>
-    <p class="mono-sm legal"><span data-ticker>$SANTA</span> is a memecoin for entertainment, with no intrinsic value or expectation of financial return. Nothing on this site is financial advice. Santa Claude is an AI character, not a real person, and can be wrong. Not affiliated with Anthropic, the Solana Foundation or any exchange.</p>
+    <p class="mono-sm legal"><span data-ticker>$SANTA</span> is a memecoin for entertainment, with no intrinsic value or expectation of financial return. Nothing on this site is financial advice. Santa Claude is an AI character, not a real person, and can be wrong. Not affiliated with the Solana Foundation or any exchange.</p>
   </div>
 </footer>
+
+<dialog class="wallet-help card" data-wallet-help>
+  <p class="mono eyebrow">Sign in</p>
+  <p data-wallet-help-text></p>
+  <div class="ctas">
+    <a class="btn btn-main" data-open-phantom rel="noopener">Open in Phantom</a>
+    <a class="btn" data-open-solflare rel="noopener">Open in Solflare</a>
+  </div>
+  <form method="dialog"><button class="link">Close</button></form>
+</dialog>
 </body>
 </html>

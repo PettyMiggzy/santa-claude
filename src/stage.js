@@ -1,4 +1,4 @@
-// The 3D Santa: three.js scene with the Meshy model (rigged, 6 clips), neon
+// The 3D Santa: three.js scene with the rigged model (7 clips), neon
 // lights, a glowing floor ring and falling snow. Listens on window for:
 //   santa:act   detail: 'wave' | 'dance' | 'ymca' | 'cheer' | 'talk' | 'idle'
 //   santa:talk  detail: true (start talking loop) | false (stop)
@@ -8,14 +8,15 @@ import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.j
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 
 const MODEL_URL = '/models/santa.glb';
-// Clip names inside santa.glb (Meshy animation library ids 11, 290, 405, 298, 313, 596).
+// Clip names inside santa.glb (animation library ids 11, 290, 405, 61, 313, 596, 42).
 const CLIPS = {
   idle: 'Idle_02',
   wave: 'Wave_One_Hand',
   dance: 'Joyful_Dance_with_Hand_Sway',
   ymca: 'ymca_dance',
-  cheer: 'Cheer_with_Both_Hands_Up',
+  cheer: 'happy_jump_m',
   talk: 'Talk_with_Hands_Open',
+  bow: 'Gentlemans_Bow',
 };
 const HEIGHT = 1.8; // world units the model is scaled to
 

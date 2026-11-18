@@ -482,7 +482,10 @@ button { font: inherit; color: inherit; }
 .btn-xl { min-height: 58px; padding: 0 30px; font-size: 1.06rem; }
 .splash.awake .btn-xl { animation: pulse-glow 1.6s ease-in-out infinite; }
 @keyframes pulse-glow { 50% { box-shadow: 0 8px 40px rgba(255, 46, 77, 0.6), 0 0 0 6px rgba(255, 46, 77, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.3); } }
-.splash-silent { margin-top: 14px; font-size: 0.85rem; color: var(--muted); }
+.splash-hint { margin: 14px 0 0; color: var(--teal); letter-spacing: 0.12em; text-transform: uppercase; animation: hint 2.4s ease-in-out infinite; }
+@keyframes hint { 50% { opacity: 0.45; } }
+.splash-silent { margin-top: 10px; font-size: 0.85rem; color: var(--muted); }
+.js .splash { cursor: pointer; }
 .splash.out { animation: splash-out 0.9s cubic-bezier(0.6, 0, 0.3, 1) forwards; pointer-events: none; }
 .splash.out .splash-in { animation: splash-in-out 0.9s ease forwards; }
 @keyframes splash-out { 60% { opacity: 1; } to { opacity: 0; visibility: hidden; } }
@@ -529,6 +532,32 @@ button { font: inherit; color: inherit; }
 .live.pre dd { color: var(--dim); }
 .live.on .eyebrow::before { animation: pulse 1.6s infinite; }
 @media (max-width: 720px) { .live-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ══ holders: header chip, perks, clips ═════════════════════════════ */
+.me-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 38px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(255, 201, 107, 0.5); background: rgba(40, 26, 6, 0.55); color: var(--gold); cursor: pointer; font-weight: 600; white-space: nowrap; }
+.me-chip .mono-sm { color: var(--muted); }
+.signin-h { white-space: nowrap; }
+@media (max-width: 560px) { .me-chip .mono-sm { display: none; } .top-in .btn-glow { display: none; } }
+#clips, #perks { padding-top: 72px; padding-bottom: 72px; border-top: 1px solid var(--line); }
+.clip-maker { padding: 18px; }
+.clip-maker textarea { width: 100%; resize: vertical; min-height: 64px; border-radius: 14px; border: 1px solid var(--line-2); background: rgba(3, 6, 12, 0.7); color: var(--text); padding: 12px 16px; font: inherit; font-size: 16px; }
+.clip-maker textarea:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(47, 245, 212, 0.15); }
+.clip-row { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; margin-top: 12px; }
+.clip-row .quick { flex: 1 1 320px; }
+.clip-status { margin: 12px 0 6px; color: var(--teal); min-height: 1.2em; }
+.clip-bar { width: 100%; margin: 0; }
+.clip-out { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin-top: 14px; }
+.clip-card { margin: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #000; }
+.clip-card video { width: 100%; display: block; }
+.clip-card figcaption { display: flex; justify-content: space-between; gap: 10px; padding: 8px 10px; background: rgba(3, 6, 12, 0.8); }
+.tiers { list-style: none; margin: 8px 0 14px; padding: 0; display: grid; gap: 8px; }
+.tiers li { display: grid; grid-template-columns: 1.3fr 1fr auto; gap: 10px; align-items: center; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: rgba(3, 6, 12, 0.4); }
+.tiers li.on { border-color: var(--gold); box-shadow: 0 0 0 1px rgba(255, 201, 107, 0.3), 0 0 22px rgba(255, 201, 107, 0.12); }
+.tiers .tier-name { font-weight: 600; }
+.tiers b { color: var(--gold); white-space: nowrap; }
+.perk-status { margin: 18px 0 0; color: var(--teal); }
+.wallet-help { max-width: 420px; padding: 24px; color: var(--text); }
+.wallet-help::backdrop { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); }
 
 /* typed eyebrows */
 .typing-on::after { content: '▌'; margin-left: 2px; color: var(--teal); animation: blink 0.9s steps(1) infinite; }

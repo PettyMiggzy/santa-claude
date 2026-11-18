@@ -36,7 +36,10 @@ export function speakable(text) {
 export async function handleSpeak(request, env = {}) {
   if (request.method !== 'POST') return json(405, { error: 'POST only' });
   const key = env.VENICE_API_KEY;
-  if (!key) return json(503, { error: 'Voice is offline (VENICE_API_KEY is not set).' });
+  if (!key) {
+    console.error('speak: VENICE_API_KEY is not set');
+    return json(503, { error: 'Voice is offline right now.' });
+  }
   if (limited(clientIp(request))) return json(429, { error: 'Santa needs to rest his voice. Try again soon.' });
 
   let body;

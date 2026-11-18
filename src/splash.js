@@ -1,6 +1,6 @@
 // The splash: night sky over the workshop, the sleigh crossing the moon, a boot
 // log tied to the real 3D download, and the Enter button that unlocks sound.
-import { unlock, setPrefs, start, sfx, speak } from './sound.js';
+import { unlock, setPrefs, start, sfx, speak, tryAutoplay, getPrefs } from './sound.js';
 
 const LINES = [
   ['booting santa.exe', ''],
@@ -112,12 +112,36 @@ export function initSplash({ reduced = false, fx } = {}) {
       },
       reduced ? 150 : 900,
     );
-    if (withSound) setTimeout(() => speak({ line: 'welcome' }), 900);
+    if (withSound) {
+      // instant recorded "Ho ho ho!", then the welcome, in Santa's real voice
+      speak({ line: 'hohoho' }).then(() => setTimeout(() => speak({ line: 'welcome' }), 250));
+    }
     setTimeout(() => fx?.flyover({ sound: withSound }), 1600);
   }
 
-  enterBtn.addEventListener('click', () => enter(true));
-  silentBtn.addEventListener('click', () => enter(false));
+  enterBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    enter(true);
+  });
+  silentBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    enter(false);
+  });
+  // the first tap anywhere on the splash counts as "enter with sound"
+  el.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('[data-enter-silent]')) return;
+    enter(true);
+  });
+
+  // returning visitors whose browser allows it get music on the splash itself
+  if (getPrefs().music) {
+    tryAutoplay().then((ok) => {
+      if (ok && !entered) {
+        start();
+        el.classList.add('sound-live');
+      }
+    });
+  }
   el.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') enter(false);
   });

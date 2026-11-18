@@ -5,6 +5,7 @@ import { initAscii } from './ascii.js';
 import { initFx } from './fx.js';
 import { initSplash } from './splash.js';
 import { initLive } from './live.js';
+import { initHolders } from './holders.js';
 import { getPrefs, setPrefs, onPrefs, unlock, start } from './sound.js';
 
 const $ = (s, r = document) => r.querySelector(s);
@@ -140,6 +141,11 @@ if (reduced || !('IntersectionObserver' in window)) {
 }
 
 initLive($('[data-live-root]'));
+try {
+  initHolders();
+} catch (e) {
+  console.error('holders failed', e);
+}
 
 // ── chat + ascii ────────────────────────────────────────
 initChat($('#talk'));

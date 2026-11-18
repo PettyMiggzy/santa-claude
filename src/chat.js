@@ -185,12 +185,15 @@ export function initChat(root) {
       });
       if (!res.ok || !res.body) {
         let msg = 'Santa got tangled in the lights. Try again in a moment.';
+        let code = '';
         try {
-          msg = (await res.json()).error || msg;
+          const j = await res.json();
+          msg = j.error || msg;
+          code = j.code || '';
         } catch {
           /* not JSON */
         }
-        throw new Error(msg);
+        throw Object.assign(new Error(msg), { code });
       }
       const reader = res.body.getReader();
       const dec = new TextDecoder();
@@ -222,6 +225,7 @@ export function initChat(root) {
         el.appendChild(pill);
         sfx(delta > 0 ? 'nice' : 'naughty');
       }
+      window.dispatchEvent(new Event('santa:spent'));
       const msg = { role: 'assistant', content: reply, ...(sm ? { raw: signed, sig: sm[1] } : {}) };
       state.messages.push(msg);
       addReplay(el, msg);
@@ -241,6 +245,15 @@ export function initChat(root) {
       talk(false);
       el.classList.add('err');
       p.textContent = err.message || 'Santa could not reach the workshop.';
+      if (err.code === 'free' || err.code === 'cookies') {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'btn btn-sm btn-main';
+        b.textContent = err.code === 'free' ? 'Sign in with wallet' : 'See holder perks';
+        b.style.marginTop = '10px';
+        b.addEventListener('click', () => (err.code === 'free' ? window.dispatchEvent(new Event('santa:signin')) : document.getElementById('perks')?.scrollIntoView({ behavior: 'smooth' })));
+        el.appendChild(b);
+      }
       // drop the unanswered message so a retry doesn't double it up
       state.messages.pop();
       save(state);

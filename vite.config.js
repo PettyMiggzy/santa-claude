@@ -1,6 +1,10 @@
 import { defineConfig, loadEnv } from 'vite';
 import { handleChat } from './server/santa.js';
 import { handleSpeak } from './server/speak.js';
+import { handleAuth, handleMe } from './server/routes.js';
+import { handleClip } from './server/clip.js';
+
+const ROUTES = { '/api/chat': handleChat, '/api/speak': handleSpeak, '/api/auth': handleAuth, '/api/me': handleMe, '/api/clip': handleClip };
 import { nodeHandler } from './server/node-adapter.js';
 
 // In `npm run dev`, serve /api/chat and /api/speak from the same handlers Vercel uses.
@@ -8,12 +12,10 @@ function santaApi(env) {
   return {
     name: 'santa-api',
     configureServer(server) {
-      server.middlewares.use('/api/chat', nodeHandler((req) => handleChat(req, env)));
-      server.middlewares.use('/api/speak', nodeHandler((req) => handleSpeak(req, env)));
+      for (const [path, fn] of Object.entries(ROUTES)) server.middlewares.use(path, nodeHandler((req) => fn(req, env)));
     },
     configurePreviewServer(server) {
-      server.middlewares.use('/api/chat', nodeHandler((req) => handleChat(req, env)));
-      server.middlewares.use('/api/speak', nodeHandler((req) => handleSpeak(req, env)));
+      for (const [path, fn] of Object.entries(ROUTES)) server.middlewares.use(path, nodeHandler((req) => fn(req, env)));
     },
   };
 }
