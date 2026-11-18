@@ -9,6 +9,7 @@
 //   VENICE_BASE_URL  optional. Defaults to https://api.venice.ai/api/v1
 
 import { SITE, link } from '../src/config.js';
+import { signText } from './sign.js';
 
 export const DEFAULT_MODEL = 'deepseek-v4-1-flash-1017';
 
@@ -164,9 +165,12 @@ export async function handleChat(request, env = {}) {
   }
 
   // Turn Venice's OpenAI-style SSE into a plain text stream for the browser.
+  // When the reply is complete, append [[sig:...]] so /api/speak can verify that
+  // the text it is asked to voice really came from Santa.
   const decoder = new TextDecoder();
   const encoder = new TextEncoder();
   let buf = '';
+  let full = '';
   const stream = upstream.body.pipeThrough(
     new TransformStream({
       transform(chunk, controller) {
@@ -180,11 +184,17 @@ export async function handleChat(request, env = {}) {
           if (!data || data === '[DONE]') continue;
           try {
             const delta = JSON.parse(data).choices?.[0]?.delta?.content;
-            if (delta) controller.enqueue(encoder.encode(delta));
+            if (delta) {
+              full += delta;
+              controller.enqueue(encoder.encode(delta));
+            }
           } catch {
             /* partial or non-JSON line: skip */
           }
         }
+      },
+      async flush(controller) {
+        if (full.trim()) controller.enqueue(encoder.encode(`[[sig:${await signText(full, key)}]]`));
       },
     }),
   );

@@ -20,10 +20,38 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Unbounded:wght@600;800&display=swap" rel="stylesheet">
 <link rel="preload" href="/models/santa.glb" as="fetch" type="model/gltf-binary" crossorigin>
+<link rel="preload" href="/img/workshop.webp" as="image" type="image/webp" media="(min-width: 700px)">
+<link rel="preload" href="/img/workshop-960.webp" as="image" type="image/webp" media="(max-width: 699px)">
 <script>document.documentElement.classList.add('js')</script>
 <script type="module" src="/src/main.js"></script>
 </head>
 <body>
+<!-- the sky behind everything: workshop panorama, shade, and the sleigh that flies over -->
+<div class="world" data-world aria-hidden="true">
+  <img class="world-img" data-world-img src="/img/workshop.webp" srcset="/img/workshop-960.webp 960w, /img/workshop.webp 1536w" sizes="100vw" alt="" width="1536" height="864">
+  <div class="world-shade" data-world-shade></div>
+  <img class="sleigh" data-sleigh src="/img/sleigh.webp" alt="" width="900" height="250">
+</div>
+
+<!-- splash: only shown when JS runs (see .js .splash in style.css) -->
+<div class="splash" id="splash" role="dialog" aria-modal="true" aria-labelledby="splash-title" aria-describedby="splash-status">
+  <div class="splash-sky" aria-hidden="true">
+    <img class="splash-bg" src="/img/workshop.webp" srcset="/img/workshop-960.webp 960w, /img/workshop.webp 1536w" sizes="100vw" alt="" width="1536" height="864">
+    <div class="splash-shade"></div>
+    <img class="splash-sleigh" src="/img/sleigh.webp" alt="" width="900" height="250">
+  </div>
+  <div class="splash-in">
+    <div class="splash-face"><img src="/img/santa-matrix.webp" alt="" width="160" height="160"></div>
+    <p class="mono eyebrow splash-eyebrow">Santa.exe · North Pole node</p>
+    <p class="splash-title" id="splash-title" data-text="SANTA CLAUDE">SANTA CLAUDE <span>AI</span></p>
+    <div class="boot mono-sm" data-boot aria-hidden="true"></div>
+    <div class="boot-bar" aria-hidden="true"><span data-boot-bar></span></div>
+    <p class="sr" id="splash-status" data-boot-status role="status">Santa is waking up.</p>
+    <button class="btn btn-main btn-xl" type="button" data-enter><span aria-hidden="true">🔊</span> Enter the workshop</button>
+    <button class="link splash-silent" type="button" data-enter-silent>enter without sound</button>
+  </div>
+</div>
+
 <a class="skip" href="#main">Skip to content</a>
 
 <header class="top">
@@ -38,11 +66,15 @@
       <a href="#workshop">Workshop</a>
       <a href="#token" data-ticker>$SANTA</a>
     </nav>
+    <button class="snd" type="button" data-sound aria-pressed="true" aria-label="Music and sounds">
+      <svg class="on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12"/></svg>
+      <svg class="off" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>
+    </button>
     <a class="btn btn-sm btn-glow" href="#token" data-buy><span>Get <span data-ticker>$SANTA</span></span><span class="arrow">↗</span></a>
   </div>
 </header>
 
-<main id="main">
+<main id="main" tabindex="-1">
   <!-- 1 + 2: hero and chat share one pinned 3D stage -->
   <div class="wrap duo">
     <div class="duo-text">
@@ -69,8 +101,12 @@
               </div>
               <div class="meter-bar" aria-hidden="true"><span data-nice-bar></span></div>
             </div>
-            <button class="who mono-sm" type="button" data-name-btn aria-label="Change the name Santa calls you">Santa calls you: <b data-name>friend</b> ✎</button>
+            <div class="chat-tools">
+              <button class="who mono-sm" type="button" data-name-btn aria-label="Change the name Santa calls you">Santa calls you: <b data-name>friend</b> ✎</button>
+              <button class="who mono-sm voice-btn" type="button" data-voice aria-pressed="true">Voice: <b data-voice-label>on</b></button>
+            </div>
           </div>
+          <div class="speaking mono-sm" data-speaking aria-hidden="true"><span class="bars"><i></i><i></i><i></i><i></i><i></i></span> Santa is speaking… <button type="button" class="link" data-hush>hush</button></div>
 
           <div class="log" data-log role="log" aria-live="polite" aria-label="Conversation with Santa">
             <div class="msg santa"><p>Ho ho ho! Santa Claude here, freshly rebooted and ready. Tell me your name, your wish, or a good deed you did this week. I'm keeping score.</p></div>
@@ -176,6 +212,19 @@
           <li><b>Swap for <span data-ticker>$SANTA</span>.</b> Paste the official contract address below into Jupiter, and check it matches this site exactly.</li>
         </ol>
       </article>
+    </div>
+
+    <div class="live card" data-live-root data-rv>
+      <div class="live-head">
+        <p class="mono eyebrow">Live numbers</p>
+        <span class="mono-sm" data-live="updated">Go live at launch</span>
+      </div>
+      <dl class="live-grid">
+        <div><dt class="mono-sm">Price</dt><dd><span data-live="price">—</span> <small data-live="change"></small></dd></div>
+        <div><dt class="mono-sm">Market cap</dt><dd data-live="mcap">—</dd></div>
+        <div><dt class="mono-sm">24h volume</dt><dd data-live="vol">—</dd></div>
+        <div><dt class="mono-sm">Liquidity</dt><dd data-live="liq">—</dd></div>
+      </dl>
     </div>
 
     <div class="contract card" data-rv>

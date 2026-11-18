@@ -2,6 +2,10 @@ import './style.css';
 import { SITE, link } from './config.js';
 import { initChat } from './chat.js';
 import { initAscii } from './ascii.js';
+import { initFx } from './fx.js';
+import { initSplash } from './splash.js';
+import { initLive } from './live.js';
+import { getPrefs, setPrefs, onPrefs, unlock, start } from './sound.js';
 
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -65,7 +69,51 @@ if (ca) {
   caEl.classList.add('empty');
 }
 
-// ── reveal on scroll ────────────────────────────────────
+// ── atmosphere + splash ─────────────────────────────────
+let fx = null;
+try {
+  fx = initFx({ reduced });
+} catch (e) {
+  console.error('fx failed', e);
+}
+try {
+  initSplash({ reduced, fx });
+} catch (e) {
+  // never leave visitors stuck behind a broken splash
+  console.error('splash failed', e);
+  document.getElementById('splash')?.remove();
+  document.documentElement.classList.remove('splashing');
+  queueMicrotask(() => window.dispatchEvent(new Event('santa:entered')));
+}
+
+// header sound toggle (music + sound effects)
+const sndBtn = $('[data-sound]');
+const renderSnd = (p) => {
+  sndBtn.setAttribute('aria-pressed', String(p.music));
+  sndBtn.classList.toggle('muted', !p.music);
+};
+renderSnd(getPrefs());
+onPrefs(renderSnd);
+sndBtn.addEventListener('click', () => {
+  unlock();
+  setPrefs({ music: !getPrefs().music });
+  start();
+});
+
+// ── reveal on scroll (+ typed eyebrows) ─────────────────
+function typeOut(el) {
+  const text = el.textContent;
+  if (!text || reduced) return;
+  el.textContent = '';
+  el.classList.add('typing-on');
+  let i = 0;
+  const step = () => {
+    el.textContent = text.slice(0, ++i);
+    if (i < text.length) setTimeout(step, 22);
+    else el.classList.remove('typing-on');
+  };
+  step();
+}
 const rv = $$('[data-rv]');
 if (reduced || !('IntersectionObserver' in window)) {
   rv.forEach((el) => el.classList.add('in'));
@@ -75,16 +123,23 @@ if (reduced || !('IntersectionObserver' in window)) {
       for (const e of entries) {
         if (!e.isIntersecting) continue;
         e.target.classList.add('in');
+        if (e.target.classList.contains('eyebrow')) typeOut(e.target);
         io.unobserve(e.target);
       }
     },
     { rootMargin: '0px 0px -8% 0px' },
   );
-  rv.forEach((el, i) => {
-    el.style.transitionDelay = `${Math.min(i % 4, 3) * 70}ms`;
-    io.observe(el);
-  });
+  const watch = () =>
+    rv.forEach((el, i) => {
+      el.style.transitionDelay = `${Math.min(i % 4, 3) * 70}ms`;
+      io.observe(el);
+    });
+  // let the hero animate in when the splash lifts, not behind it
+  if (document.documentElement.classList.contains('splashing')) window.addEventListener('santa:entered', watch, { once: true });
+  else watch();
 }
+
+initLive($('[data-live-root]'));
 
 // ── chat + ascii ────────────────────────────────────────
 initChat($('#talk'));
@@ -102,9 +157,16 @@ import('./stage.js')
   .then(({ initStage }) =>
     initStage(stageEl, {
       reduced,
-      onProgress: (p) => (pctEl.textContent = `${Math.round(p * 100)}%`),
-      onReady: () => stageEl.classList.add('ready'),
+      onProgress: (p) => {
+        pctEl.textContent = `${Math.round(p * 100)}%`;
+        window.dispatchEvent(new CustomEvent('santa:progress', { detail: p }));
+      },
+      onReady: () => {
+        stageEl.classList.add('ready');
+        window.dispatchEvent(new Event('santa:ready'));
+      },
       onError: () => {
+        window.dispatchEvent(new Event('santa:3d-failed'));
         loadEl.textContent = 'Santa is shy today: 3D needs WebGL';
         $('[data-poster]').style.opacity = '1';
         $('.clips', stageEl).hidden = true;
@@ -113,4 +175,5 @@ import('./stage.js')
   )
   .catch(() => {
     loadEl.hidden = true;
+    window.dispatchEvent(new Event('santa:3d-failed'));
   });

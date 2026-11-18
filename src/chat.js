@@ -1,9 +1,12 @@
-// Talk to Santa: streaming chat with a Nice-o-meter and on-device memory.
+// Talk to Santa: streaming chat, Santa's voice, a Nice-o-meter and on-device memory.
+import { speak, stopSpeaking, sfx, getPrefs, setPrefs, onPrefs, unlock, voiceLevel } from './sound.js';
+
 const STORE = 'santa-claude:v1';
 const MAX_SAVED = 40;
 const GREETING = "Ho ho ho! Santa Claude here, freshly rebooted and ready. Tell me your name, your wish, or a good deed you did this week. I'm keeping score.";
 
 const TAG_RE = /\[\[\s*nice\s*:\s*([+-]?\d+)\s*\]\]/i;
+const SIG_RE = /\[\[sig:([A-Za-z0-9_-]{32})\]\]$/;
 
 function load() {
   try {
@@ -32,11 +35,11 @@ function niceLabel(n) {
   return 'Coal incoming';
 }
 
-// Hide the score tag, including a half-streamed one at the end.
+// Hide [[...]] tags, including a half-streamed one at the end.
 function clean(text) {
   return text
-    .replace(/\[\[\s*nice[^\]]*\]\]/gi, '')
-    .replace(/\s*\[\[?[^\]\n]{0,12}$/, '')
+    .replace(/\[\[[^\]]*\]\]/g, '')
+    .replace(/\s*\[\[?[^\]\n]{0,40}$/, '')
     .replace(/\s*\[\[[^\]\n]*\]?$/, '')
     .trimEnd();
 }
@@ -54,16 +57,67 @@ export function initChat(root) {
   const niceNum = root.querySelector('[data-nice-num]');
   const niceLbl = root.querySelector('[data-nice-label]');
   const niceBar = root.querySelector('[data-nice-bar]');
+  const voiceBtn = root.querySelector('[data-voice]');
+  const voiceLbl = root.querySelector('[data-voice-label]');
+  const speakingEl = root.querySelector('[data-speaking]');
 
   const state = load();
   let busy = false;
 
+  // ── voice toggle + "Santa is speaking" bars ─────────────
+  const renderVoice = (p) => {
+    voiceBtn.setAttribute('aria-pressed', String(p.voice));
+    voiceLbl.textContent = p.voice ? 'on' : 'off';
+  };
+  renderVoice(getPrefs());
+  onPrefs(renderVoice);
+  voiceBtn.addEventListener('click', () => {
+    unlock();
+    const on = !getPrefs().voice;
+    setPrefs({ voice: on });
+    if (!on) stopSpeaking();
+  });
+  root.querySelector('[data-hush]')?.addEventListener('click', () => stopSpeaking());
+
+  const bars = [...speakingEl.querySelectorAll('i')];
+  let barRaf = 0;
+  window.addEventListener('santa:talk', (e) => {
+    speakingEl.classList.toggle('on', !!e.detail && !busy);
+    cancelAnimationFrame(barRaf);
+    if (!e.detail) return;
+    const loop = (t) => {
+      const lvl = voiceLevel();
+      bars.forEach((b, i) => {
+        const v = lvl > 0.02 ? lvl : 0.25 + 0.25 * Math.sin(t / 120 + i * 1.3); // browser voice has no level
+        b.style.transform = `scaleY(${(0.25 + v * (0.6 + 0.4 * Math.sin(t / 90 + i))).toFixed(2)})`;
+      });
+      barRaf = requestAnimationFrame(loop);
+    };
+    barRaf = requestAnimationFrame(loop);
+  });
+
+  // ── rendering ───────────────────────────────────────────
   function renderMeter() {
     const n = Math.round(state.nice);
     niceNum.textContent = n;
     niceLbl.textContent = niceLabel(n);
     niceBar.style.width = `${Math.max(3, n)}%`;
     nameEl.textContent = state.name || 'friend';
+  }
+
+  function addReplay(div, msg) {
+    if (!msg.sig || !msg.raw) return;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'replay';
+    b.setAttribute('aria-label', 'Hear Santa say this');
+    b.textContent = '🔊';
+    b.addEventListener('click', () => {
+      unlock();
+      if (!getPrefs().voice) setPrefs({ voice: true });
+      speak({ text: msg.raw, sig: msg.sig });
+    });
+    div.appendChild(b);
   }
 
   function bubble(role, text, extra = '') {
@@ -80,7 +134,10 @@ export function initChat(root) {
   function renderAll() {
     log.textContent = '';
     bubble('assistant', GREETING);
-    for (const m of state.messages) bubble(m.role, m.content);
+    for (const m of state.messages) {
+      const div = bubble(m.role, m.content);
+      if (m.role === 'assistant') addReplay(div, m);
+    }
     renderMeter();
   }
 
@@ -90,9 +147,12 @@ export function initChat(root) {
     sendBtn.textContent = b ? '…' : 'Send';
   }
 
+  // ── talking ─────────────────────────────────────────────
   async function send(text) {
     text = text.trim().slice(0, 600);
     if (!text || busy) return;
+    unlock();
+    stopSpeaking();
     setBusy(true);
 
     const named = text.match(/\b(?:my name is|call me|name's|i am called)\s+([\p{L}][\p{L}\p{N}'-]{0,20})/iu);
@@ -117,7 +177,11 @@ export function initChat(root) {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ messages: state.messages.slice(-12), name: state.name, nice: state.nice }),
+        body: JSON.stringify({
+          messages: state.messages.slice(-12).map(({ role, content }) => ({ role, content })),
+          name: state.name,
+          nice: state.nice,
+        }),
       });
       if (!res.ok || !res.body) {
         let msg = 'Santa got tangled in the lights. Try again in a moment.';
@@ -140,10 +204,15 @@ export function initChat(root) {
           log.scrollTop = log.scrollHeight;
         }
       }
-      const reply = clean(raw).trim() || 'Ho ho… my circuits went quiet. Say that again?';
+      raw += dec.decode();
+
+      // split off the signature: it covers exactly the text before it
+      const sm = raw.match(SIG_RE);
+      const signed = sm ? raw.slice(0, raw.length - sm[0].length) : raw;
+      const reply = clean(signed).trim() || 'Ho ho… my circuits went quiet. Say that again?';
       p.textContent = reply;
 
-      const m = raw.match(TAG_RE);
+      const m = signed.match(TAG_RE);
       const delta = m ? Math.max(-3, Math.min(3, parseInt(m[1], 10))) : 0;
       if (delta) {
         state.nice = Math.max(0, Math.min(100, state.nice + delta * 3));
@@ -151,13 +220,23 @@ export function initChat(root) {
         pill.className = `delta ${delta > 0 ? 'up' : 'down'}`;
         pill.textContent = `${delta > 0 ? '+' : ''}${delta * 3} nice`;
         el.appendChild(pill);
+        sfx(delta > 0 ? 'nice' : 'naughty');
       }
-      state.messages.push({ role: 'assistant', content: reply });
+      const msg = { role: 'assistant', content: reply, ...(sm ? { raw: signed, sig: sm[1] } : {}) };
+      state.messages.push(msg);
+      addReplay(el, msg);
       save(state);
       renderMeter();
-      talk(false);
+      setBusy(false);
+
       if (wantsDance) act(Math.random() < 0.5 ? 'dance' : 'ymca');
       else if (delta >= 2) act('cheer');
+
+      if (getPrefs().voice && sm) {
+        await speak({ text: signed, sig: sm[1] }); // keeps Santa talking until he's done
+      } else {
+        talk(false);
+      }
     } catch (err) {
       talk(false);
       el.classList.add('err');
@@ -165,9 +244,9 @@ export function initChat(root) {
       // drop the unanswered message so a retry doesn't double it up
       state.messages.pop();
       save(state);
+      setBusy(false);
     } finally {
       log.scrollTop = log.scrollHeight;
-      setBusy(false);
     }
   }
 
@@ -212,6 +291,7 @@ export function initChat(root) {
   });
 
   root.querySelector('[data-forget]')?.addEventListener('click', () => {
+    stopSpeaking();
     state.name = '';
     state.nice = 50;
     state.messages = [];

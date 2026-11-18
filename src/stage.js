@@ -224,7 +224,12 @@ export function initStage(root, { reduced = false, onProgress, onReady, onError 
       }
       mixer.addEventListener('finished', settle);
       fadeTo('idle');
-      if (!reduced) setTimeout(() => act('wave'), 600);
+      if (!reduced) {
+        // wave hello when the splash lifts, not behind it
+        const hello = () => setTimeout(() => act('wave'), 500);
+        if (document.documentElement.classList.contains('splashing')) window.addEventListener('santa:entered', hello, { once: true });
+        else hello();
+      }
       onReady?.();
     },
     (e) => {
@@ -319,7 +324,8 @@ export function initStage(root, { reduced = false, onProgress, onReady, onError 
   }
 
   function updateLoop() {
-    const run = visible && document.visibilityState === 'visible';
+    // don't burn the GPU/CPU behind the splash; start when the visitor enters
+    const run = visible && document.visibilityState === 'visible' && !document.documentElement.classList.contains('splashing');
     renderer.setAnimationLoop(run ? frame : null);
     if (run) clock.getDelta();
   }
@@ -328,6 +334,7 @@ export function initStage(root, { reduced = false, onProgress, onReady, onError 
     updateLoop();
   }).observe(root);
   document.addEventListener('visibilitychange', updateLoop);
+  window.addEventListener('santa:entered', updateLoop);
   updateLoop();
 
   window.addEventListener('santa:act', (e) => act(e.detail));
